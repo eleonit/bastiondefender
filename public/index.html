@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="Bastion Defenders - Juego cooperativo para ninos"
+    />
+    <meta name="theme-color" content="#0d0d1a" />
+    <title>Bastion Defenders</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Exo+2:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Canvas principal del juego -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Overlay de controles taciles (generado por JS) -->
+    <div id="controlsOverlay"></div>
+
+    <!-- Pantalla de carga -->
+    <div id="loadingScreen">
+      <div class="loading-content">
+        <div class="shield-icon">🛡️</div>
+        <h1>BASTION DEFENDERS</h1>
+        <p>Cargando...</p>
+      </div>
+    </div>
+
+    <!-- Scripts del juego (ES Modules) -->
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
