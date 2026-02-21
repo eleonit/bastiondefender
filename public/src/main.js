@@ -44,6 +44,7 @@ class Game {
     this.endStats = null;
     this.scores   = [];
     this._leaderboardBtns = null;
+    this._floatingTexts = [];
 
     this._resize();
     this._bindEvents();
@@ -183,49 +184,67 @@ class Game {
 
     const { players, wm, base, particles } = this;
 
-    // Actualizar pads (cooldowns)
+    // ── Procesar input de cada pad ──────────────────────────
     this.pads.forEach((pad, pi) => {
-      pad.update(dt);
       const player = players[pi];
-      if (!player || !player.alive) return;
+      if (!player || !player.alive) { pad.update(dt); return; }
+
       const inp = pad.input;
-      // Movimiento
-      player.move(inp.dx, inp.dy, dt, this.W, this.H);
-      // Ataque automatico cuando se presiona boton
-      if (inp.attack) player.autoAttack(wm.enemies, dt);
-      // Habilidades
+
+      // 1) LEER habilidades ANTES de update() (que limpia flags)
       inp.abilityJustPressed.forEach((pressed, i) => {
-        if (pressed && pad.cooldowns[i] <= 0) {
-          player.useAbility(i, wm.enemies, players, base, this.time);
+        if (pressed && pad.cooldowns[i] <= 0 && !player.isCasting) {
+          // Inicia el canal (castTime) y luego dispara la habilidad
+          player.startCast(i, wm.enemies, players, base, this.time);
           pad.startCooldown(i);
+          // Efecto visual inmediato al iniciar el canal
+          const col = player.classData.color;
+          const ab  = player.classData.abilities[i];
+          particles.shockwaves.push({ x:player.x, y:player.y, r:8, maxR:50,
+            alpha:0.8, color:col, speed:260 });
+          this._floatingTexts.push({
+            text: ab.icon + ' ' + ab.name,
+            x: player.x, y: player.y - player.radius - 24,
+            color: col, life: Math.max(1.0, ab.castTime + 0.3), maxLife: Math.max(1.0, ab.castTime + 0.3),
+            vy: -0.5,
+          });
         }
       });
+
+      // 2) Actualizar cooldowns y limpiar flags
+      pad.update(dt);
+
+      // 3) Movimiento
+      player.move(inp.dx, inp.dy, dt);
+
+      // 4) Ataque manual (boton ataque)
+      if (inp.attack) player.autoAttack(wm.enemies, dt);
     });
 
-    // Actualizar jugadores
+    // ── Actualizar jugadores (update/projectiles/effects) ──
     players.forEach(p => {
       if (!p.alive) return;
-      // Auto-ataque incluso sin presion de boton (si hay enemigos cerca)
+      // auto-attack pasivo si hay enemigos cerca y no se esta moviendo con boton
       p.autoAttack(wm.enemies, dt);
       p.update(dt, wm.enemies, players, base, this.time);
     });
 
-    // Wave manager
+    // ── Wave manager ────────────────────────────────────────
     wm.tick(dt, players, base);
 
-    // Partículas
+    // ── Partículas y textos flotantes ──────────────────────
     particles.update(dt);
+    this._floatingTexts = this._floatingTexts.filter(ft => {
+      ft.life -= dt;
+      ft.y    += ft.vy;
+      return ft.life > 0;
+    });
 
-    // Game Over
-    if (!base.alive) {
-      this._endGame(false);
-    }
-    // Victoria
-    if (wm.allWavesDone && wm.enemies.every(e => !e.alive)) {
-      this._endGame(true);
-    }
+    // ── Game Over / Victoria ─────────────────────────────── 
+    if (!base.alive) this._endGame(false);
+    if (wm.allWavesDone && wm.enemies.every(e => !e.alive)) this._endGame(true);
 
-    // Actualizar base
+    // ── Base ────────────────────────────────────────────────
     base.update(dt);
   }
 
@@ -308,6 +327,22 @@ class Game {
 
       // Partículas
       this.particles.draw(ctx);
+
+      // Textos flotantes de habilidades
+      ctx.save();
+      for (const ft of this._floatingTexts) {
+        const alpha = ft.life / ft.maxLife;
+        ctx.globalAlpha = alpha;
+        ctx.font = `bold ${Math.round(12 / scale)}px 'Press Start 2P', monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = ft.color;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.shadowBlur = 0;
+      }
+      ctx.restore();
 
       ctx.restore();
 

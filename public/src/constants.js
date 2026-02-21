@@ -21,10 +21,10 @@ export const CLASSES = {
     hp: 220, speed: 2.4, atk: 28, range: 55, atkRate: 1.0, radius: 14,
     description: 'Tanque resistente, pelea cuerpo a cuerpo',
     abilities: [
-      { name: 'Tajo de Espada',   icon: '⚔️',  cd: 3,  description: 'Golpe amplio que daña a todos en frente' },
-      { name: 'Golpe de Escudo',  icon: '🛡️',  cd: 5,  description: 'Aturde enemigos cercanos 1.5s' },
-      { name: 'Grito de Guerra',  icon: '📯',  cd: 12, description: 'Aumenta velocidad de ataque aliados 5s' },
-      { name: 'Torbellino',       icon: '🌪️',  cd: 8,  description: 'Gira y daña todo alrededor 2s' },
+      { name: 'Tajo de Espada',   icon: '⚔️',  cd: 3,  castTime: 0.20, description: 'Golpe amplio que daña a todos en frente (2.5x)' },
+      { name: 'Golpe de Escudo',  icon: '🛡️',  cd: 5,  castTime: 0.15, description: 'Aturde enemigos cercanos 1.5s' },
+      { name: 'Grito de Guerra',  icon: '📯',  cd: 12, castTime: 0.10, description: 'Aumenta velocidad de ataque aliados 5s' },
+      { name: 'Torbellino',       icon: '🌪️',  cd: 8,  castTime: 0.70, description: 'Gira y daña todo alrededor (3x)' },
     ],
   },
   Arquero: {
@@ -32,10 +32,10 @@ export const CLASSES = {
     hp: 130, speed: 3.5, atk: 20, range: 270, atkRate: 0.7, radius: 12,
     description: 'Ataca desde lejos con flechas rapidas',
     abilities: [
-      { name: 'Multiflechas',      icon: '🏹',  cd: 4,  description: 'Dispara 3 flechas en abanico' },
-      { name: 'Flecha Perforadora', icon: '➡️',  cd: 6,  description: 'Flecha que atraviesa todos los enemigos en linea' },
-      { name: 'Lluvia de Flechas', icon: '🌧️',  cd: 10, description: 'Bombardeo de flechas en area' },
-      { name: 'Ojo de Aguila',     icon: '🦅',  cd: 15, description: 'Aumenta rango y dano masivamente 4s' },
+      { name: 'Multiflechas',      icon: '🏹',  cd: 4,  castTime: 0.15, description: 'Dispara 3 flechas en abanico (1.2x)' },
+      { name: 'Flecha Perforadora', icon: '➡️', cd: 6,  castTime: 0.25, description: 'Flecha que atraviesa todos los enemigos (1.8x)' },
+      { name: 'Lluvia de Flechas', icon: '🌧️',  cd: 10, castTime: 0.90, description: 'Bombardeo de flechas en area (2x ret.)' },
+      { name: 'Ojo de Aguila',     icon: '🦅',  cd: 15, castTime: 0.20, description: 'Aumenta rango y dano masivamente 4s' },
     ],
   },
   Mago: {
@@ -43,10 +43,10 @@ export const CLASSES = {
     hp: 110, speed: 3.0, atk: 35, range: 220, atkRate: 1.4, radius: 12,
     description: 'Magia elemental de area, alta magia',
     abilities: [
-      { name: 'Bola de Fuego',    icon: '🔥',  cd: 4,  description: 'Proyectil explosivo con dano en area' },
-      { name: 'Muro de Hielo',    icon: '❄️',  cd: 8,  description: 'Crea barrera que ralentiza enemigos' },
-      { name: 'Cadena Electrica', icon: '⚡',  cd: 6,  description: 'Rayo encadenado entre 5 enemigos' },
-      { name: 'Meteoro',          icon: '☄️',  cd: 18, description: 'Gran explosion retardada en area' },
+      { name: 'Bola de Fuego',    icon: '🔥',  cd: 4,  castTime: 0.35, description: 'Proyectil explosivo en area (2x)' },
+      { name: 'Muro de Hielo',    icon: '❄️',  cd: 8,  castTime: 0.50, description: 'Zona que ralentiza enemigos 4s' },
+      { name: 'Cadena Electrica', icon: '⚡',  cd: 6,  castTime: 0.45, description: 'Rayo encadenado entre 5 enemigos (1.5x)' },
+      { name: 'Meteoro',          icon: '☄️',  cd: 18, castTime: 1.40, description: 'Gran explosion retardada (5x) — ¡Cargando!' },
     ],
   },
   Asesino: {
@@ -54,10 +54,10 @@ export const CLASSES = {
     hp: 155, speed: 5.0, atk: 45, range: 80, atkRate: 0.5, radius: 11,
     description: 'Velocidad extrema y golpes criticos',
     abilities: [
-      { name: 'Apunalada',        icon: '🗡️',  cd: 3,  description: 'Dano critico masivo al enemigo mas cercano' },
-      { name: 'Bomba de Humo',    icon: '💨',  cd: 7,  description: 'Nube que ralentiza y ciega en area' },
-      { name: 'Clon Oscuro',      icon: '👤',  cd: 12, description: 'Senuelo que atrae enemigos 3s' },
-      { name: 'Tormenta de Dagas', icon: '✨', cd: 9,  description: 'Dagas en todas direcciones' },
+      { name: 'Apunalada',        icon: '🗡️',  cd: 3,  castTime: 0.08, description: 'Dash + dano critico masivo (5x)' },
+      { name: 'Bomba de Humo',    icon: '💨',  cd: 7,  castTime: 0.20, description: 'Nube que ralentiza y ciega en area' },
+      { name: 'Clon Oscuro',      icon: '👤',  cd: 12, castTime: 0.30, description: 'Señuelo que atrae enemigos 3s' },
+      { name: 'Tormenta de Dagas', icon: '✨', cd: 9,  castTime: 0.55, description: 'Dagas en todas direcciones (1.5x)' },
     ],
   },
   Brujo: {
@@ -65,10 +65,10 @@ export const CLASSES = {
     hp: 125, speed: 2.8, atk: 25, range: 190, atkRate: 1.8, radius: 12,
     description: 'Maldiciones, invocaciones y magia oscura',
     abilities: [
-      { name: 'Maldicion',      icon: '💀',  cd: 4,  description: 'Reduce dano y velocidad del enemigo' },
-      { name: 'Invocar Imp',    icon: '👺',  cd: 10, description: 'Convoca mascota que ataca enemigos' },
-      { name: 'Pacto Oscuro',   icon: '🌑',  cd: 14, description: 'Sacrifica HP para explosion en area' },
-      { name: 'Grieta del Vacio', icon: '🌀', cd: 20, description: 'Portal que absorbe enemigos cercanos' },
+      { name: 'Maldicion',      icon: '💀',  cd: 4,  castTime: 0.30, description: 'Reduce dano y velocidad del enemigo' },
+      { name: 'Invocar Imp',    icon: '👺',  cd: 10, castTime: 0.50, description: 'Convoca mascota que ataca enemigos' },
+      { name: 'Pacto Oscuro',   icon: '🌑',  cd: 14, castTime: 0.80, description: 'Sacrifica HP para explosion en area (2x)' },
+      { name: 'Grieta del Vacio', icon: '🌀', cd: 20, castTime: 1.20, description: 'Portal que absorbe enemigos — ¡Cargando!' },
     ],
   },
 };

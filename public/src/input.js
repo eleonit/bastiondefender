@@ -260,7 +260,10 @@ export class VirtualPad {
   }
 
   // Llamar cada frame con dt en segundos
+  // IMPORTANTE: leer abilityJustPressed ANTES de llamar update()
+  // update() limpia las flags AL FINAL para que duren exactamente un frame
   update(dt) {
+    // 1) Actualizar cooldowns y UI
     for (let i = 0; i < 4; i++) {
       if (this.cooldowns[i] > 0) {
         this.cooldowns[i] = Math.max(0, this.cooldowns[i] - dt);
@@ -269,6 +272,7 @@ export class VirtualPad {
         if (overlay) overlay.style.height = pct + '%';
       }
     }
+    // 2) Limpiar flags AL FINAL (listas para el proximo frame)
     this.input.abilityJustPressed = new Array(4).fill(false);
   }
 
