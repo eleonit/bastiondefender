@@ -299,6 +299,39 @@ export function drawLeaderboard(ctx, W, H, scores) {
 }
 
 // ─────────────────────────────────────
+// REMOTE PLAYERS
+// ─────────────────────────────────────
+export function drawRemotePlayers(ctx, remotePlayers, time) {
+  Object.values(remotePlayers).forEach(p => {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 12, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cuerpo (Simple circle for now, matching entity style)
+    ctx.fillStyle = p.color || '#fff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Nombre
+    ctx.font = 'bold 10px "Exo 2", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(p.name, 0, -22);
+    
+    ctx.restore();
+  });
+}
+
+// ─────────────────────────────────────
 // UTIL
 // ─────────────────────────────────────
 function _roundRect(ctx, x, y, w, h, r) {

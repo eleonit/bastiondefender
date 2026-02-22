@@ -18,6 +18,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
+    <!-- Socket.io client -->
+    <script src="/socket.io/socket.io.js"></script>
   </head>
   <body>
     <!-- Canvas principal del juego -->
@@ -26,8 +28,28 @@
     <!-- Overlay de controles taciles (generado por JS) -->
     <div id="controlsOverlay"></div>
 
+    <!-- Pantalla de Login -->
+    <div id="loginScreen">
+      <div class="login-panel">
+        <div class="shield-icon">🛡️</div>
+        <h1>BASTION DEFENDERS</h1>
+        <p>MODO COOPERATIVO</p>
+        <div class="form-group">
+          <input
+            type="text"
+            id="nicknameInput"
+            placeholder="Tu Apodo"
+            maxlength="12"
+            autofocus
+          />
+          <button id="joinBtn">UNIRSE A LA BATALLA</button>
+        </div>
+        <div id="connectionInfo"></div>
+      </div>
+    </div>
+
     <!-- Pantalla de carga -->
-    <div id="loadingScreen">
+    <div id="loadingScreen" class="hidden">
       <div class="loading-content">
         <div class="shield-icon">🛡️</div>
         <h1>BASTION DEFENDERS</h1>

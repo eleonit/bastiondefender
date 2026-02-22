@@ -5,7 +5,30 @@ const path = require('path');
 const { Pool } = require('pg');
 
 const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+const os = require('os');
 const PORT = process.env.PORT || 3000;
+
+// --- Helper: Get Local IP ---
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const LOCAL_IP = getLocalIP();
 
 // --- Database ---
 const pool = new Pool({
@@ -47,6 +70,57 @@ async function initDB() {
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// --- Socket.io Logic ---
+let players = {};
+let gameState = {
+  enemies: [],
+  wave: 0,
+  isStarted: false
+};
+
+io.on('connection', (socket) => {
+  console.log(`📡 Jugador conectado: ${socket.id}`);
+
+  socket.on('joinGame', (userData) => {
+    players[socket.id] = {
+      id: socket.id,
+      name: userData.name || 'Anónimo',
+      x: 400,
+      y: 300,
+      hp: 100,
+      score: 0,
+      color: userData.color || `hsl(${Math.random() * 360}, 70%, 50%)`
+    };
+    
+    // Enviar estado actual al nuevo jugador
+    socket.emit('currentPlayers', players);
+    // Notificar a otros
+    socket.broadcast.emit('newPlayer', players[socket.id]);
+  });
+
+  socket.on('playerMovement', (movementData) => {
+    if (players[socket.id]) {
+      players[socket.id].x = movementData.x;
+      players[socket.id].y = movementData.y;
+      socket.broadcast.emit('playerMoved', players[socket.id]);
+    }
+  });
+
+  socket.on('playerAction', (actionData) => {
+    // Ejemplo: ataques, habilidades
+    socket.broadcast.emit('playerActionPerformed', {
+      playerId: socket.id,
+      ...actionData
+    });
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`🔌 Jugador desconectado: ${socket.id}`);
+    delete players[socket.id];
+    io.emit('playerDisconnected', socket.id);
+  });
+});
 
 // --- API Routes ---
 
@@ -115,6 +189,8 @@ app.get('*', (req, res) => {
 
 // --- Start ---
 initDB();
-app.listen(PORT, () => {
-  console.log(`🛡️ Bastion Defenders servidor corriendo en puerto ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🛡️  Bastion Defenders servidor multijugador activo`);
+  console.log(`🏠 Red Local: http://${LOCAL_IP}:${PORT}`);
+  console.log(`🌍 Puerto: ${PORT}`);
 });
