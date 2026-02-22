@@ -59,25 +59,31 @@ export class VirtualPad {
     this.el = document.createElement('div');
     this.el.className = `player-pad ${colorClass}`;
     this.el.style.cssText = `
-      width:${padW}px;
+      width: 100%;
+      padding: 10px 20px;
       ${pos.top    != null ? `top:${pos.top}${typeof pos.top==='number'?'px':''}` : ''};
       ${pos.bottom != null ? `bottom:${pos.bottom}px` : ''};
-      ${pos.left   != null ? `left:${pos.left}px` : ''};
-      ${pos.right  != null ? `right:${pos.right}px` : ''};
+      left: 0; right: 0;
+      background: transparent;
+      border: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
     `;
 
-    // Etiqueta del jugador
+    // Etiqueta del jugador (centrada)
     const label = document.createElement('div');
     label.style.cssText = `
-      position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+      position:absolute; bottom:100%; left:50%; transform:translateX(-50%);
       font-size:9px; font-family:'Press Start 2P',monospace;
       color:${color}; white-space:nowrap; text-shadow:0 0 8px ${color};
+      margin-bottom: 10px;
     `;
     const className = CLASS_NAMES.find(k => CLASSES[k] === this.classData) || '?';
     label.textContent = `J${this.idx+1} ${this.classData?.icon||''} ${className}`;
     this.el.appendChild(label);
 
-    // JOYSTICK
+    // JOYSTICK (Izquierda)
     this.joystickZone = document.createElement('div');
     this.joystickZone.className = 'joystick-zone';
     const joySize = joyR * 2 + 8;
@@ -94,13 +100,22 @@ export class VirtualPad {
     this.joystickZone.appendChild(this.knob);
     this.el.appendChild(this.joystickZone);
 
+    // CONTENEDOR DE ACCIONES (Derecha)
+    const actionsRight = document.createElement('div');
+    actionsRight.className = 'actions-right';
+    actionsRight.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    `;
+
     // BOTON ATAQUE
     this.atkBtn = document.createElement('div');
     this.atkBtn.className = `attack-btn ${btnClass}`;
     this.atkBtn.style.cssText = `width:${atkS}px;height:${atkS}px;font-size:${atkS*0.38}px;`;
     this.atkBtn.textContent = '⚔';
     this.atkBtn.title = 'Atacar';
-    this.el.appendChild(this.atkBtn);
+    actionsRight.appendChild(this.atkBtn);
 
     // BOTONES DE HABILIDADES (2x2)
     const grid = document.createElement('div');
@@ -120,7 +135,8 @@ export class VirtualPad {
       grid.appendChild(btn);
       return btn;
     });
-    this.el.appendChild(grid);
+    actionsRight.appendChild(grid);
+    this.el.appendChild(actionsRight);
 
     overlay.appendChild(this.el);
 

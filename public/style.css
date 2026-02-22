@@ -118,29 +118,37 @@ body {
 /* === PANEL DE CONTROLES TACTILES === */
 .player-pad {
   position: absolute;
-  pointer-events: all;
+  pointer-events: none; /* Let events through the empty center */
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 6px;
+  background: transparent;
+  z-index: 100;
+}
+
+.player-pad > * {
+  pointer-events: all; /* Catch events on actual controls */
+}
+
+.actions-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
   background: rgba(0, 0, 0, 0.45);
   border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   backdrop-filter: blur(4px);
-  gap: 6px;
-  transition: border-color 0.2s;
-}
-.player-pad.active {
-  border-color: rgba(255, 215, 0, 0.4);
+  padding: 6px;
 }
 
-/* Joystick */
 .joystick-zone {
   position: relative;
   flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
