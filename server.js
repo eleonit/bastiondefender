@@ -113,6 +113,7 @@ io.on('connection', (socket) => {
     players[socket.id] = {
       id: socket.id,
       name: userData.name || 'Anónimo',
+      isHost: userData.isHost || false,
       x: 400,
       y: 300,
       hp: 100,
@@ -125,9 +126,8 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('newPlayer', players[socket.id]);
   });
   socket.on('startGame', () => {
-    // Solo el host puede iniciar
-    const playerIds = Object.keys(players);
-    if (playerIds[0] === socket.id && playerIds.length >= 2 && playerIds.length <= MAX_PLAYERS) {
+    // Solo el host puede iniciar (jugador que se declaró anfitrión)
+    if (players[socket.id] && players[socket.id].isHost) {
       io.emit('startGame');
       gameState.isStarted = true;
     }
