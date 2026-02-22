@@ -150,10 +150,9 @@ class Game {
 
     this.canvas.addEventListener('click', e => this._handleClick(e.clientX, e.clientY));
     this.canvas.addEventListener('touchend', e => {
-      if (this.state === STATE.SELECT || this.state === STATE.GAME_OVER || this.state === STATE.VICTORY) {
-        const t = e.changedTouches[0];
-        this._handleClick(t.clientX, t.clientY);
-      }
+      // Permitir clics táctiles en todos los estados (importante para HUD en PLAYING)
+      const t = e.changedTouches[0];
+      this._handleClick(t.clientX, t.clientY);
     });
   }
 
@@ -288,50 +287,50 @@ class Game {
     const player = players[0];
     const pad = this.pads[0];
 
-    // No permitir acciones si el panel de stats está abierto
-    if (this.uiState.showStats) return;
+    // No permitir acciones del jugador si el panel de stats está abierto
+    if (!this.uiState.showStats) {
+      if (player && pad) {
+        if (player.alive) {
+          const inp = pad.input;
 
-    if (player && pad) {
-      if (player.alive) {
-        const inp = pad.input;
-
-        // Movimiento
-        const oldX = player.x, oldY = player.y;
-        player.move(inp.dx, inp.dy, dt);
-        
-        // Sync movimiento si cambió (ahora incluye nivel y stats)
-        if (oldX !== player.x || oldY !== player.y) {
-          this.socket.emit('playerMovement', { 
-            x: player.x, 
-            y: player.y, 
-            level: player.level,
-            statsInvested: player.statsInvested
-          });
-        }
-
-        // Habilidades
-        inp.abilityJustPressed.forEach((pressed, i) => {
-          if (pressed && pad.cooldowns[i] <= 0 && !player.isCasting) {
-            player.startCast(i, wm.enemies, players, base, this.time);
-            pad.startCooldown(i);
-            
-            this.socket.emit('playerAction', { type: 'ability', index: i });
-
-            const col = player.classData.color;
-            const ab  = player.classData.abilities[i];
-            particles.shockwaves.push({ x:player.x, y:player.y, r:8, maxR:50, alpha:0.8, color:col, speed:260 });
-            this._floatingTexts.push({
-              text: ab.icon + ' ' + ab.name,
-              x: player.x, y: player.y - player.radius - 24,
-              color: col, life: Math.max(1.0, ab.castTime + 0.3), maxLife: Math.max(1.0, ab.castTime + 0.3),
-              vy: -0.5,
+          // Movimiento
+          const oldX = player.x, oldY = player.y;
+          player.move(inp.dx, inp.dy, dt);
+          
+          // Sync movimiento si cambió (ahora incluye nivel y stats)
+          if (oldX !== player.x || oldY !== player.y) {
+            this.socket.emit('playerMovement', { 
+              x: player.x, 
+              y: player.y, 
+              level: player.level,
+              statsInvested: player.statsInvested
             });
           }
-        });
 
-        if (inp.attack) player.autoAttack(wm.enemies, dt);
+          // Habilidades
+          inp.abilityJustPressed.forEach((pressed, i) => {
+            if (pressed && pad.cooldowns[i] <= 0 && !player.isCasting) {
+              player.startCast(i, wm.enemies, players, base, this.time);
+              pad.startCooldown(i);
+              
+              this.socket.emit('playerAction', { type: 'ability', index: i });
+
+              const col = player.classData.color;
+              const ab  = player.classData.abilities[i];
+              particles.shockwaves.push({ x:player.x, y:player.y, r:8, maxR:50, alpha:0.8, color:col, speed:260 });
+              this._floatingTexts.push({
+                text: ab.icon + ' ' + ab.name,
+                x: player.x, y: player.y - player.radius - 24,
+                color: col, life: Math.max(1.0, ab.castTime + 0.3), maxLife: Math.max(1.0, ab.castTime + 0.3),
+                vy: -0.5,
+              });
+            }
+          });
+
+          if (inp.attack) player.autoAttack(wm.enemies, dt);
+        }
+        pad.update(dt, player.level);
       }
-      pad.update(dt, player.level);
     }
 
     players.forEach(p => {

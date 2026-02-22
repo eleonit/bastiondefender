@@ -211,11 +211,11 @@ export function drawHUD(ctx, W, H, players, waveManager, base, player, uiState) 
   ctx.fillStyle = '#fff';
   ctx.fillText('SALIR', quitX + btnW/2, btnY + btnH/2 + 1);
 
-  // Guardar bounds para clics
+  // Guardar bounds para clics (usamos la altura total de la barra para mayor facilidad)
   if (uiState) {
     uiState.hudButtons = {
-      stats: { x: statsX, y: btnY, w: btnW, h: btnH },
-      quit: { x: quitX, y: btnY, w: btnW, h: btnH }
+      stats: { x: statsX, y: 0, w: btnW, h: 38 },
+      quit: { x: quitX, y: 0, w: btnW, h: 38 }
     };
   }
 
