@@ -1,0 +1,18 @@
+{
+  "name": "El último León",
+  "short_name": "Último León",
+  "description": "Juego cooperativo de defensa de base.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0d0d1a",
+  "theme_color": "#ffd700",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "src/Elultimoleon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
