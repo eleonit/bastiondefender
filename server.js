@@ -51,11 +51,14 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
-      -- Ensure player_names exists if table was created before
+      -- Ensure columns exist if table was created before
       DO $$ 
       BEGIN 
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='scores' AND column_name='player_names') THEN
           ALTER TABLE scores ADD COLUMN player_names TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='scores' AND column_name='player_levels') THEN
+          ALTER TABLE scores ADD COLUMN player_levels TEXT;
         END IF;
       END $$;
 
@@ -137,7 +140,7 @@ io.on('connection', (socket) => {
 app.get('/api/scores', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, player_count, waves_survived, total_kills, victory,
+      `SELECT id, player_count, player_names, player_levels, waves_survived, total_kills, victory,
               to_char(created_at, 'DD/MM/YYYY HH24:MI') as fecha
        FROM scores
        ORDER BY waves_survived DESC, total_kills DESC
@@ -152,15 +155,15 @@ app.get('/api/scores', async (req, res) => {
 
 // POST /api/scores - Guardar puntaje de una partida
 app.post('/api/scores', async (req, res) => {
-  const { player_count, player_names, waves_survived, total_kills, victory } = req.body;
+  const { player_count, player_names, player_levels, waves_survived, total_kills, victory } = req.body;
   if (player_count == null || waves_survived == null || total_kills == null) {
     return res.status(400).json({ success: false, message: 'Faltan datos de la partida' });
   }
   try {
     const insertResult = await pool.query(
-      `INSERT INTO scores (player_count, player_names, waves_survived, total_kills, victory)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [player_count, player_names || '', waves_survived, total_kills, !!victory]
+      `INSERT INTO scores (player_count, player_names, player_levels, waves_survived, total_kills, victory)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [player_count, player_names || '', player_levels || '', waves_survived, total_kills, !!victory]
     );
 
     // Actualizar estadisticas globales

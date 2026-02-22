@@ -277,8 +277,17 @@ export function drawLeaderboard(ctx, W, H, scores) {
       ctx.fillStyle = i < 3 ? '#ffd700' : '#ccc';
       ctx.font = `${Math.round(panH*0.066)}px 'Exo 2',sans-serif`;
       
-      const names = s.player_names || `${s.player_count}P`;
-      const truncatedNames = names.length > 15 ? names.substring(0, 12) + '...' : names;
+      const rawNames = s.player_names || `${s.player_count}P`;
+      const rawLevels = s.player_levels || '';
+      
+      let combined = rawNames;
+      if (rawLevels) {
+        const nArr = rawNames.split(', ');
+        const lArr = rawLevels.split(', ');
+        combined = nArr.map((n, idx) => `${n}(L${lArr[idx]||'?'})`).join(',');
+      }
+      
+      const truncatedNames = combined.length > 20 ? combined.substring(0, 17) + '...' : combined;
 
       ctx.fillText(
         `${medal} ${i+1}  ${truncatedNames}   ${s.waves_survived}   ${s.total_kills}   ${s.victory?'Victoria':'Derrota'}  ${s.fecha}`,

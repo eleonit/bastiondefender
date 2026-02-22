@@ -300,10 +300,15 @@ class Game {
 
     const remoteNames = Object.values(this.remotePlayers).map(p => p.name);
     const allNames = [this.nickname, ...remoteNames].filter(Boolean).join(', ');
+    
+    const localLevel = this.players[0] ? this.players[0].level : 1;
+    const remoteLevels = Object.values(this.remotePlayers).map(p => p.level || 1);
+    const allLevels = [localLevel, ...remoteLevels].join(', ');
 
     const stats = {
       playerCount:   1 + Object.keys(this.remotePlayers).length,
       playerNames:   allNames,
+      playerLevels:  allLevels,
       wavesSurvived: this.wm.wavesCleared,
       totalWaves:    this.wm.totalWaves,
       totalKills:    this.wm.totalKills,
@@ -318,8 +323,9 @@ class Game {
         body: JSON.stringify({
           player_count:   stats.playerCount,
           player_names:   stats.playerNames,
+          player_levels:  stats.playerLevels,
           waves_survived: stats.wavesSurvived,
-          total_kills:    stats.totalKills,
+          total_kills:    stats.total_kills,
           victory:        stats.victory,
         })
       });
