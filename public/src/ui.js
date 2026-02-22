@@ -7,144 +7,298 @@ import { CLASSES, CLASS_NAMES, CONFIG, PLAYER_COLORS } from './constants.js';
 // CHARACTER SELECT SCREEN
 // ─────────────────────────────────────
 export function drawCharacterSelect(ctx, W, H, selectState, time) {
-  // Fondo
+  // ── Fondo ──
   const grad = ctx.createLinearGradient(0, 0, 0, H);
   grad.addColorStop(0, '#0d0d2a');
   grad.addColorStop(1, '#1a0d2e');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  // Titulo
+  const selectedName  = selectState.selectedClasses[0];
+  const selectedClass = CLASSES[selectedName];
+  const selColor      = selectedClass.color;
+
+  // ── Título ──
   ctx.save();
-  ctx.font = `bold ${Math.round(W*0.038)}px 'Press Start 2P', monospace`;
+  ctx.font = `bold ${Math.round(W * 0.032)}px 'Press Start 2P', monospace`;
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffd700';
   ctx.shadowColor = '#ffd700';
-  ctx.shadowBlur = 20;
-  ctx.fillText('⚔️  EL ULTIMO LEON  🛡️', W/2, H*0.12);
+  ctx.shadowBlur = 18;
+  ctx.fillText('⚔️  EL ULTIMO LEON  🛡️', W / 2, H * 0.09);
   ctx.shadowBlur = 0;
   ctx.restore();
 
-  // Subtitulo
   ctx.save();
-  ctx.font = `${Math.round(W*0.018)}px 'Exo 2', sans-serif`;
+  ctx.font = `${Math.round(W * 0.014)}px 'Exo 2', sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#aaaacc';
-  ctx.fillText('- Defiende la base de las hordas enemigas -', W/2, H*0.19);
+  ctx.fillStyle = '#7777aa';
+  ctx.fillText('ELIGE TU PERSONAJE', W / 2, H * 0.155);
   ctx.restore();
 
-  // Selector de numero de jugadores
-  const btnY = H*0.26, btnH = H*0.065, btnW = W*0.055, gap = W*0.01;
-  const totalBtnsW = (CONFIG.MAX_PLAYERS * (btnW + gap)) - gap;
-  const startBtnsX = W/2 - totalBtnsW/2;
+  // ── Tarjetas de clase (fila horizontal) ──
+  const cardCount = CLASS_NAMES.length;
+  const cardW     = Math.min(W * 0.14, H * 0.30);
+  const cardH     = cardW * 1.15;
+  const totalCardsW = cardCount * cardW;
+  const cardGap   = (W - totalCardsW) / (cardCount + 1);
+  const cardY     = H * 0.185;
+
+  selectState.classBtnBounds    = [];
+  selectState.classBtnBounds[0] = [];
+  selectState.playerBtnBounds   = [];
+
+  CLASS_NAMES.forEach((name, ci) => {
+    const cls       = CLASSES[name];
+    const cx        = cardGap + ci * (cardW + cardGap);
+    const isSelected = (selectedName === name);
+
+    ctx.save();
+    if (isSelected) {
+      ctx.fillStyle   = cls.color + '44';
+      ctx.strokeStyle = cls.color;
+      ctx.lineWidth   = 3;
+      ctx.shadowColor = cls.color;
+      ctx.shadowBlur  = 18;
+    } else {
+      ctx.fillStyle   = '#111128';
+      ctx.strokeStyle = '#2a2a55';
+      ctx.lineWidth   = 1;
+    }
+    _roundRect(ctx, cx, cardY, cardW, cardH, 12);
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Icono
+    ctx.font          = `${Math.round(cardH * 0.36)}px serif`;
+    ctx.textAlign     = 'center';
+    ctx.textBaseline  = 'middle';
+    ctx.fillText(cls.icon, cx + cardW / 2, cardY + cardH * 0.38);
+
+    // Nombre
+    ctx.font      = `bold ${Math.round(cardW * 0.13)}px 'Exo 2', sans-serif`;
+    ctx.fillStyle = isSelected ? cls.color : '#666688';
+    ctx.fillText(name, cx + cardW / 2, cardY + cardH * 0.78);
+
+    // Flecha indicadora
+    if (isSelected) {
+      ctx.font      = `${Math.round(H * 0.03)}px serif`;
+      ctx.fillStyle = cls.color;
+      ctx.fillText('▼', cx + cardW / 2, cardY + cardH + H * 0.025);
+    }
+    ctx.restore();
+
+    selectState.classBtnBounds[0].push({ x: cx, y: cardY, w: cardW, h: cardH, className: name });
+  });
+
+  // ── Panel de detalle ──
+  const detY  = cardY + cardH + H * 0.065;
+  const detH  = H * 0.415;
+  const detW  = W * 0.90;
+  const detX  = (W - detW) / 2;
+
   ctx.save();
-  ctx.font = `${Math.round(H*0.025)}px 'Exo 2', sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#aaaacc';
-  ctx.fillText('Número de Jugadores:', W/2, btnY - H*0.02);
+  ctx.fillStyle   = selColor + '14';
+  ctx.strokeStyle = selColor + '55';
+  ctx.lineWidth   = 2;
+  _roundRect(ctx, detX, detY, detW, detH, 16);
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
-  for (let i = 1; i <= CONFIG.MAX_PLAYERS; i++) {
-    const bx = startBtnsX + (i-1)*(btnW+gap);
-    const selected = (selectState.playerCount === i);
-    ctx.save();
-    ctx.fillStyle = selected ? '#ffd700' : '#33336a';
-    ctx.strokeStyle = selected ? '#ffd700' : '#5555aa';
-    ctx.lineWidth = selected ? 3 : 1;
-    _roundRect(ctx, bx, btnY, btnW, btnH, 8);
-    ctx.fill(); ctx.stroke();
-    ctx.font = `bold ${Math.round(btnH*0.5)}px 'Exo 2', sans-serif`;
-    ctx.fillStyle = selected ? '#000' : '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${i}P`, bx + btnW/2, btnY + btnH/2);
-    ctx.restore();
-  }
 
-  // Panel de seleccion de clases por jugador
-  const n = selectState.playerCount;
-  const isMobile = W < 768;
-  const classCount = CLASS_NAMES.length;
-  const panelW = isMobile ? Math.min(W*0.9/n, W*0.28) : Math.min(W*0.95/n, W*0.22);
-  const panelH = isMobile ? H*0.65 : H*0.50;
-  const panelStartX = W/2 - (n * panelW + (n-1)*W*0.01)/2;
-  const panelY = H*0.37;
+  // Columna izquierda — icono grande + nombre + descripción
+  const colLeft = detW * 0.22;
 
-  for (let pi = 0; pi < n; pi++) {
-    const px = panelStartX + pi * (panelW + W*0.01);
-    const selected = selectState.selectedClasses[pi];
-    const pcolor = PLAYER_COLORS[pi];
-
-    // Panel jugador
-    ctx.save();
-    ctx.fillStyle = `${pcolor}22`;
-    ctx.strokeStyle = pcolor;
-    ctx.lineWidth = 2;
-    _roundRect(ctx, px, panelY, panelW, panelH, 10);
-    ctx.fill(); ctx.stroke();
-    ctx.font = `bold ${Math.round(panelW*0.11)}px 'Exo 2', sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = pcolor;
-    ctx.fillText(`J${pi+1}`, px + panelW/2, panelY + panelH*0.08);
-    ctx.restore();
-
-    // Opciones de clase
-    const itemH = panelH * 0.17;
-    CLASS_NAMES.forEach((name, ci) => {
-      const cls = CLASSES[name];
-      const iy = panelY + panelH*0.14 + ci * (itemH + 3);
-      const isSelected = (selected === name);
-      ctx.save();
-      ctx.fillStyle = isSelected ? pcolor + 'bb' : '#22224488';
-      ctx.strokeStyle = isSelected ? pcolor : '#44445588';
-      ctx.lineWidth = isSelected ? 2 : 1;
-      _roundRect(ctx, px+4, iy, panelW-8, itemH, 6);
-      ctx.fill(); ctx.stroke();
-      ctx.font = `${Math.round(itemH*0.38)}px serif`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(cls.icon, px+10, iy + itemH/2);
-      ctx.font = `bold ${Math.round(itemH*0.28)}px 'Exo 2', sans-serif`;
-      ctx.fillStyle = isSelected ? '#fff' : '#aaa';
-      ctx.fillText(name, px+30, iy + itemH/2 - itemH*0.08);
-      ctx.font = `${Math.round(itemH*0.22)}px 'Exo 2', sans-serif`;
-      ctx.fillStyle = '#aaa';
-      ctx.fillText(cls.description, px+30, iy + itemH/2 + itemH*0.18);
-      ctx.restore();
-    });
-  }
-
-  // Boton Jugar
-  const playBtnW = W*0.18, playBtnH = H*0.072;
-  const playBtnX = W/2 - playBtnW/2, playBtnY = H*0.91;
-  const p = 0.7 + 0.3*Math.sin(time*3);
   ctx.save();
-  ctx.fillStyle = `rgba(255, 215, 0, ${p*0.9})`;
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#ffd700';
-  ctx.shadowBlur = 20*p;
-  _roundRect(ctx, playBtnX, playBtnY, playBtnW, playBtnH, 12);
-  ctx.fill(); ctx.stroke();
-  ctx.font = `bold ${Math.round(playBtnH*0.38)}px 'Press Start 2P', monospace`;
-  ctx.fillStyle = '#000';
-  ctx.textAlign = 'center';
+  ctx.font         = `${Math.round(detH * 0.30)}px serif`;
+  ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
+  ctx.fillText(selectedClass.icon, detX + colLeft / 2, detY + detH * 0.33);
+
+  ctx.font      = `bold ${Math.round(H * 0.030)}px 'Exo 2', sans-serif`;
+  ctx.fillStyle = selColor;
+  ctx.shadowColor = selColor;
+  ctx.shadowBlur  = 10;
+  ctx.fillText(selectedName, detX + colLeft / 2, detY + detH * 0.60);
   ctx.shadowBlur = 0;
-  ctx.fillText('▶  JUGAR', W/2, playBtnY + playBtnH/2);
+
+  // Descripción (partida por coma si es larga)
+  ctx.font      = `${Math.round(H * 0.018)}px 'Exo 2', sans-serif`;
+  ctx.fillStyle = '#8888aa';
+  const descParts = selectedClass.description.split(',');
+  descParts.forEach((part, i) => {
+    ctx.fillText(part.trim(), detX + colLeft / 2, detY + detH * 0.74 + i * H * 0.026);
+  });
   ctx.restore();
 
-  selectState.playBtnBounds = { x: playBtnX, y: playBtnY, w: playBtnW, h: playBtnH };
-  selectState.playerBtnBounds = Array.from({length:CONFIG.MAX_PLAYERS}, (_,i) => ({
-    x: startBtnsX + i*(btnW+gap), y: btnY, w: btnW, h: btnH
-  }));
-  selectState.classBtnBounds = [];
-  for (let pi = 0; pi < n; pi++) {
-    const px = panelStartX + pi*(panelW+W*0.01);
-    selectState.classBtnBounds[pi] = CLASS_NAMES.map((_, ci) => ({
-      x: px+4, y: panelY+panelH*0.14+ci*(panelH*0.17+3),
-      w: panelW-8, h: panelH*0.17, className: CLASS_NAMES[ci]
-    }));
-  }
+  // Separador vertical izquierdo
+  ctx.save();
+  ctx.strokeStyle = selColor + '33';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(detX + colLeft, detY + detH * 0.05);
+  ctx.lineTo(detX + colLeft, detY + detH * 0.95);
+  ctx.stroke();
+  ctx.restore();
+
+  // Columna central — barras de estadísticas
+  const colMidX = detX + colLeft + detW * 0.03;
+  const colMidW = detW * 0.30;
+
+  ctx.save();
+  ctx.font      = `bold ${Math.round(H * 0.022)}px 'Exo 2', sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ccccee';
+  ctx.fillText('ESTADÍSTICAS', colMidX, detY + detH * 0.12);
+  ctx.restore();
+
+  const statData = [
+    { label: 'HP',    val: selectedClass.hp,                    max: 220, color: '#e74c3c' },
+    { label: 'ATK',   val: selectedClass.atk,                   max: 45,  color: '#f39c12' },
+    { label: 'VEL',   val: Math.round(selectedClass.speed * 20), max: 100, color: '#2ecc71' },
+    { label: 'RANGO', val: Math.round(selectedClass.range / 2.7), max: 100, color: '#3498db' },
+  ];
+
+  statData.forEach((st, i) => {
+    const sy      = detY + detH * 0.24 + i * detH * 0.175;
+    const barW    = colMidW * 0.58;
+    const barH    = Math.max(H * 0.020, 8);
+    const fill    = Math.min(st.val / st.max, 1);
+    const labelX  = colMidX;
+    const barX    = colMidX + colMidW * 0.30;
+
+    ctx.save();
+    ctx.font          = `bold ${Math.round(H * 0.018)}px 'Exo 2', sans-serif`;
+    ctx.textAlign     = 'left';
+    ctx.textBaseline  = 'middle';
+    ctx.fillStyle     = '#9999bb';
+    ctx.fillText(st.label, labelX, sy + barH / 2);
+
+    // Barra fondo
+    ctx.fillStyle = '#1e1e40';
+    _roundRect(ctx, barX, sy, barW, barH, barH / 2);
+    ctx.fill();
+
+    // Barra relleno
+    if (fill > 0) {
+      ctx.fillStyle   = st.color;
+      ctx.shadowColor = st.color;
+      ctx.shadowBlur  = 6;
+      _roundRect(ctx, barX, sy, barW * fill, barH, barH / 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // Valor numérico
+    ctx.font      = `bold ${Math.round(H * 0.016)}px 'Exo 2', sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = st.color;
+    ctx.fillText(st.val, barX + barW + 7, sy + barH / 2);
+    ctx.restore();
+  });
+
+  // Separador vertical derecho
+  const col3X = colMidX + colMidW + detW * 0.03;
+  ctx.save();
+  ctx.strokeStyle = selColor + '33';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(col3X - detW * 0.01, detY + detH * 0.05);
+  ctx.lineTo(col3X - detW * 0.01, detY + detH * 0.95);
+  ctx.stroke();
+  ctx.restore();
+
+  // Columna derecha — habilidades
+  const abilX = col3X;
+  const abilW = detX + detW - abilX - detW * 0.02;
+
+  ctx.save();
+  ctx.font      = `bold ${Math.round(H * 0.022)}px 'Exo 2', sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ccccee';
+  ctx.fillText('HABILIDADES', abilX, detY + detH * 0.12);
+  ctx.restore();
+
+  const abilRowH = detH * 0.185;
+  selectedClass.abilities.forEach((ab, i) => {
+    const ay = detY + detH * 0.22 + i * (abilRowH + detH * 0.005);
+
+    ctx.save();
+    ctx.fillStyle   = '#0d0d22cc';
+    ctx.strokeStyle = selColor + '33';
+    ctx.lineWidth   = 1;
+    _roundRect(ctx, abilX, ay, abilW, abilRowH, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Número de habilidad
+    const badgeR = Math.min(abilRowH * 0.25, 14);
+    ctx.fillStyle   = selColor + 'cc';
+    ctx.shadowColor = selColor;
+    ctx.shadowBlur  = 6;
+    ctx.beginPath();
+    ctx.arc(abilX + badgeR + 5, ay + abilRowH / 2, badgeR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.font          = `bold ${Math.round(badgeR * 1.1)}px 'Exo 2', sans-serif`;
+    ctx.textAlign     = 'center';
+    ctx.textBaseline  = 'middle';
+    ctx.fillStyle     = '#000';
+    ctx.fillText(`${i + 1}`, abilX + badgeR + 5, ay + abilRowH / 2);
+
+    // Icono habilidad
+    ctx.font          = `${Math.round(abilRowH * 0.42)}px serif`;
+    ctx.textAlign     = 'center';
+    ctx.textBaseline  = 'middle';
+    ctx.fillText(ab.icon, abilX + badgeR * 2 + 24, ay + abilRowH / 2);
+
+    // Nombre habilidad
+    ctx.font      = `bold ${Math.round(H * 0.017)}px 'Exo 2', sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#eeeeff';
+    ctx.fillText(ab.name, abilX + badgeR * 2 + 42, ay + abilRowH * 0.30);
+
+    // Descripción
+    ctx.font      = `${Math.round(H * 0.013)}px 'Exo 2', sans-serif`;
+    ctx.fillStyle = '#7777aa';
+    const shortDesc = ab.description.length > 42 ? ab.description.substring(0, 42) + '…' : ab.description;
+    ctx.fillText(shortDesc, abilX + badgeR * 2 + 42, ay + abilRowH * 0.68);
+
+    // Cooldown
+    ctx.font      = `${Math.round(H * 0.014)}px 'Exo 2', sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#555577';
+    ctx.fillText(`⏱ ${ab.cd}s`, abilX + abilW - 8, ay + abilRowH * 0.28);
+
+    ctx.restore();
+  });
+
+  // ── Botón JUGAR ──
+  const pbW = Math.min(W * 0.20, 260);
+  const pbH = Math.max(H * 0.070, 40);
+  const pbX = W / 2 - pbW / 2;
+  const pbY = detY + detH + (H - detY - detH - pbH) / 2;
+  const p   = 0.7 + 0.3 * Math.sin(time * 3);
+
+  ctx.save();
+  ctx.fillStyle   = `rgba(255,215,0,${p * 0.92})`;
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth   = 3;
+  ctx.shadowColor = '#ffd700';
+  ctx.shadowBlur  = 22 * p;
+  _roundRect(ctx, pbX, pbY, pbW, pbH, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.font          = `bold ${Math.round(pbH * 0.36)}px 'Press Start 2P', monospace`;
+  ctx.fillStyle     = '#000';
+  ctx.textAlign     = 'center';
+  ctx.textBaseline  = 'middle';
+  ctx.shadowBlur    = 0;
+  ctx.fillText('▶  JUGAR', W / 2, pbY + pbH / 2);
+  ctx.restore();
+
+  selectState.playBtnBounds = { x: pbX, y: pbY, w: pbW, h: pbH };
 }
 
 // ─────────────────────────────────────
