@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bastian Defender</string>
+    <string name="title_activity_main">Bastian Defender</string>
+    <string name="package_name">com.bastiandefender.app</string>
+    <string name="custom_url_scheme">com.bastiandefender.app</string>
+</resources>
