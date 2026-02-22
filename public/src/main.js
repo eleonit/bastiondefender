@@ -6,7 +6,7 @@ import { VirtualPad }      from './input.js';
 import { GameMap, Base }   from './world.js';
 import { ParticleSystem, WaveManager } from './systems.js';
 import { createPlayer }    from './entities.js';
-import { drawCharacterSelect, drawHUD, drawGameOver, drawVictory, drawLeaderboard, drawRemotePlayers } from './ui.js';
+import { drawCharacterSelect, drawHUD, drawGameOver, drawVictory, drawLeaderboard, drawRemotePlayers, drawStatsPanel } from './ui.js';
 
 // ─────────────────────────────────────
 // STATE
