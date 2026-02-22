@@ -14,6 +14,10 @@ import { drawCharacterSelect, drawHUD, drawGameOver, drawVictory, drawLeaderboar
 const STATE = { LOGIN: 'login', SELECT: 'select', PLAYING: 'playing', GAME_OVER: 'game_over', VICTORY: 'victory' };
 
 class Game {
+    this.waitingRoomVisible = false;
+    this.isHost = false;
+    this.waitingPlayers = [];
+    this.maxPlayers = 6;
   constructor() {
     this.canvas = document.getElementById('gameCanvas');
     this.ctx    = this.canvas.getContext('2d');
@@ -61,6 +65,10 @@ class Game {
   }
 
   _initLogin() {
+      const waitingRoomScreen = document.getElementById('waitingRoomScreen');
+      const waitingPlayersList = document.getElementById('waitingPlayersList');
+      const startGameBtn = document.getElementById('startGameBtn');
+      const waitingInfo = document.getElementById('waitingInfo');
     const loginScreen = document.getElementById('loginScreen');
     const nicknameInput = document.getElementById('nicknameInput');
     const joinBtn = document.getElementById('joinBtn');
@@ -70,6 +78,18 @@ class Game {
     connectionInfo.textContent = `Conéctate a la misma red para jugar con amigos`;
 
     const attemptJoin = () => {
+            this.nickname = name;
+            this.socket = io();
+            this.socket.on('connect', () => {
+              console.log('✅ Conectado al servidor con ID:', this.socket.id);
+              this.localPlayerId = this.socket.id;
+              this.socket.emit('joinGame', { name: this.nickname });
+              loginScreen.classList.add('hidden');
+              setTimeout(() => loginScreen.remove(), 500);
+              waitingRoomScreen.classList.remove('hidden');
+              this.state = 'waiting_room';
+            });
+            this._setupSocketListeners();
       const name = nicknameInput.value.trim();
       if (!name) return;
       
@@ -97,6 +117,46 @@ class Game {
   }
 
   _setupSocketListeners() {
+        this.socket.on('currentPlayers', (players) => {
+          this.waitingPlayers = Object.values(players);
+          this.isHost = this.waitingPlayers.length > 0 && this.waitingPlayers[0].id === this.localPlayerId;
+          this._updateWaitingRoomUI();
+        });
+        this.socket.on('newPlayer', (playerInfo) => {
+          this.remotePlayers[playerInfo.id] = playerInfo;
+          this.waitingPlayers.push(playerInfo);
+          this._updateWaitingRoomUI();
+          console.log('👋 Nuevo jugador:', playerInfo.name);
+        });
+        this.socket.on('playerDisconnected', (id) => {
+          delete this.remotePlayers[id];
+          this.waitingPlayers = this.waitingPlayers.filter(p => p.id !== id);
+          this._updateWaitingRoomUI();
+          console.log('🏃 Jugador salió:', id);
+        });
+        this.socket.on('startGame', () => {
+          waitingRoomScreen.classList.add('hidden');
+          this.state = STATE.SELECT;
+        });
+      }
+      _updateWaitingRoomUI() {
+        const waitingRoomScreen = document.getElementById('waitingRoomScreen');
+        const waitingPlayersList = document.getElementById('waitingPlayersList');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const waitingInfo = document.getElementById('waitingInfo');
+        if (this.state !== 'waiting_room') return;
+        waitingRoomScreen.classList.remove('hidden');
+        waitingPlayersList.innerHTML = this.waitingPlayers.map(p => `<div>${p.name}</div>`).join('');
+        waitingInfo.textContent = `Jugadores conectados: ${this.waitingPlayers.length} / ${this.maxPlayers}`;
+        if (this.isHost && this.waitingPlayers.length >= 2 && this.waitingPlayers.length <= this.maxPlayers) {
+          startGameBtn.classList.remove('hidden');
+        } else {
+          startGameBtn.classList.add('hidden');
+        }
+        startGameBtn.onclick = () => {
+          this.socket.emit('startGame');
+        };
+      }
     this.socket.on('currentPlayers', (players) => {
       Object.keys(players).forEach(id => {
         if (id !== this.localPlayerId) {

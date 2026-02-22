@@ -100,11 +100,16 @@ let gameState = {
   wave: 0,
   isStarted: false
 };
+const MAX_PLAYERS = 6;
 
 io.on('connection', (socket) => {
   console.log(`📡 Jugador conectado: ${socket.id}`);
 
   socket.on('joinGame', (userData) => {
+    if (Object.keys(players).length >= MAX_PLAYERS) {
+      socket.emit('waitingRoomFull');
+      return;
+    }
     players[socket.id] = {
       id: socket.id,
       name: userData.name || 'Anónimo',
@@ -114,11 +119,18 @@ io.on('connection', (socket) => {
       score: 0,
       color: userData.color || `hsl(${Math.random() * 360}, 70%, 50%)`
     };
-    
     // Enviar estado actual al nuevo jugador
     socket.emit('currentPlayers', players);
     // Notificar a otros
     socket.broadcast.emit('newPlayer', players[socket.id]);
+  });
+  socket.on('startGame', () => {
+    // Solo el host puede iniciar
+    const playerIds = Object.keys(players);
+    if (playerIds[0] === socket.id && playerIds.length >= 2 && playerIds.length <= MAX_PLAYERS) {
+      io.emit('startGame');
+      gameState.isStarted = true;
+    }
   });
 
   socket.on('playerMovement', (movementData) => {
