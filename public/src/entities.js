@@ -27,6 +27,8 @@ export class Player {
     this.atkTimer = 0; this.radius = classData.radius || 13;
     this.particles = particles;
     this.alive = true;
+    this.lives = 3;        // revives disponibles
+    this.reviveTimer = 0;  // cuenta regresiva antes de revivir
     this.facing = 0; this.lastDx = 1; this.lastDy = 0;
     this.invincible = 0; this.speedBuff = 0; this.atkRateBuff = 0; this.atkBuff = 0;
     this._hitFlash = 0; this._walkTime = 0; this._walkAnim = 0;
@@ -142,13 +144,35 @@ export class Player {
   takeDamage(amount) {
     if (this.invincible>0||!this.alive) return;
     this.hp -= amount; this._hitFlash = 0.25; this.invincible = 0.35;
-    if (this.hp<=0) { this.hp=0; this.alive=false; }
+    if (this.hp<=0) {
+      this.hp=0; this.alive=false;
+      if (this.lives > 0) {
+        this.lives--;
+        this.reviveTimer = 5;
+      }
+    }
   }
 
   useAbility(index, enemies, players, base, time) {}
 
+  _revive(base) {
+    this.alive = true;
+    this.hp = Math.round(this.maxHp * 0.5);
+    this.invincible = 3;
+    this._hitFlash = 0;
+    if (base) { this.x = base.x + (Math.random()-0.5)*60; this.y = base.y + (Math.random()-0.5)*60; }
+    this.particles.emitMagic(this.x, this.y, '#ffffff', 30, 50);
+    this.particles.shockwaves.push({ x:this.x, y:this.y, r:5, maxR:70, alpha:1, color:'#ffffff', speed:280 });
+  }
+
   update(dt, enemies, players, base, time) {
-    if (!this.alive) return;
+    if (!this.alive) {
+      if (this.reviveTimer > 0) {
+        this.reviveTimer -= dt;
+        if (this.reviveTimer <= 0) this._revive(base);
+      }
+      return;
+    }
     if (this.invincible>0) this.invincible -= dt;
     if (this._hitFlash>0) this._hitFlash -= dt;
     if (this.speedBuff>0)   { this.speedBuff   = Math.max(0,this.speedBuff-dt); }
@@ -204,9 +228,32 @@ export class Player {
     this.projectiles.push({x:this.x,y:this.y,angle,speed,dmg,radius,color,life,aoe,pierce});
   }
 
+  _drawReviving(ctx, time) {
+    // Fantasma parpadeante mientras espera el revive
+    ctx.save();
+    ctx.globalAlpha = 0.25 + 0.15 * Math.sin(time * 6);
+    ctx.translate(this.x, this.y);
+    if (this.lastDx < 0) ctx.scale(-1, 1);
+    this.drawBody(ctx, time);
+    ctx.restore();
+    // Cuenta regresiva
+    const secs = Math.ceil(this.reviveTimer);
+    ctx.save();
+    ctx.font = 'bold 12px "Press Start 2P", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+    ctx.strokeText(`↑ ${secs}`, this.x, this.y - this.radius - 20);
+    ctx.fillStyle = '#88ffff';
+    ctx.fillText(`↑ ${secs}`, this.x, this.y - this.radius - 20);
+    ctx.restore();
+  }
+
   // ── Render base ──────────────────────────────────────────
   draw(ctx, time) {
-    if (!this.alive) return;
+    if (!this.alive) {
+      if (this.reviveTimer > 0) this._drawReviving(ctx, time);
+      return;
+    }
     // Proyectiles
     for (const p of this.projectiles) {
       ctx.save();
@@ -294,6 +341,21 @@ export class Player {
     const label = `Lvl ${this.level} J${this.idx+1}`;
     ctx.strokeText(label, this.x, by-10);
     ctx.fillText(label, this.x, by-10);
+
+    // Vidas restantes (pequeños puntos sobre la barra)
+    const dotR = 4, dotGap = 3;
+    const totalDots = 3;
+    const dotsTotalW = totalDots * (dotR*2) + (totalDots-1) * dotGap;
+    const dotsX = this.x - dotsTotalW/2 + dotR;
+    const dotsY = by - 22;
+    for (let i = 0; i < totalDots; i++) {
+      const cx2 = dotsX + i * (dotR*2 + dotGap);
+      ctx.beginPath(); ctx.arc(cx2, dotsY, dotR, 0, Math.PI*2);
+      ctx.fillStyle = i < this.lives ? '#ff4466' : '#333344';
+      ctx.fill();
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   }
 }
 

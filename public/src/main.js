@@ -403,8 +403,7 @@ class Game {
     }
 
     players.forEach(p => {
-      if (!p.alive) return;
-      p.autoAttack(wm.enemies, dt);
+      if (p.alive) p.autoAttack(wm.enemies, dt);
       p.update(dt, wm.enemies, players, base, this.time);
     });
 
@@ -418,6 +417,7 @@ class Game {
     });
 
     if (!base.alive) this._endGame(false);
+    if (players.length > 0 && players.every(p => !p.alive && p.lives === 0 && p.reviveTimer <= 0)) this._endGame(false);
     if (wm.allWavesDone && wm.enemies.every(e => !e.alive)) this._endGame(true);
     base.update(dt);
   }

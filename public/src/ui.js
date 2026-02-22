@@ -381,6 +381,32 @@ export function drawHUD(ctx, W, H, players, waveManager, base, player, uiState) 
   ctx.fillStyle = '#fff';
   ctx.fillText('SALIR', quitX + btnW/2, btnY + btnH/2 + 1);
 
+  // Vidas del jugador local (esquina superior derecha)
+  if (player) {
+    const livesX = W - 10;
+    const dotR = isMobile ? 8 : 6;
+    const dotGap = isMobile ? 5 : 4;
+    const totalLives = 3;
+    const livesW = totalLives * dotR*2 + (totalLives-1) * dotGap;
+    const livesStartX = livesX - livesW;
+    const livesY = 19;
+    for (let i = 0; i < totalLives; i++) {
+      const dx = livesStartX + i * (dotR*2 + dotGap) + dotR;
+      ctx.beginPath(); ctx.arc(dx, livesY, dotR, 0, Math.PI*2);
+      ctx.fillStyle = i < player.lives ? '#ff4466' : '#333344';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff44'; ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    // Muerto permanente
+    if (!player.alive && player.lives === 0) {
+      ctx.font = `bold ${isMobile ? 11 : 9}px "Press Start 2P", monospace`;
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ff4466';
+      ctx.fillText('KO', livesX, livesY);
+    }
+  }
+
   // Guardar bounds para clics (usamos la altura total de la barra para mayor facilidad)
   if (uiState) {
     uiState.hudButtons = {
