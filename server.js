@@ -133,6 +133,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Host indica que todos deben comenzar la partida simultáneamente
+  socket.on('hostStartedGame', () => {
+    if (players[socket.id] && players[socket.id].isHost) {
+      io.emit('gameBegun');
+    }
+  });
+
+  // Sincronizar muerte de enemigo entre clientes
+  socket.on('enemyDied', (data) => {
+    socket.broadcast.emit('enemyDied', data);
+  });
+
   socket.on('playerMovement', (movementData) => {
     if (players[socket.id]) {
       players[socket.id].x = movementData.x;

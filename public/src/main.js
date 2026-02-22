@@ -34,8 +34,10 @@ class Game {
 
     // Character select state
     this.selectState = {
-      playerCount: 1, // En multiplayer local es 1 por dispositivo
+      playerCount: 1,
       selectedClasses: ['Caballero'],
+      isHost: false,   // para mostrar botón correcto en character select
+      message: '',     // mensaje temporal ("Esperando al anfitrión...")
       playBtnBounds: null,
       playerBtnBounds: [],
       classBtnBounds: [],
@@ -93,6 +95,7 @@ class Game {
 
     const connectAndJoin = (isHost) => {
       this.isHost = isHost;
+      this.selectState.isHost = isHost;
       this.socket = io();
       const waitingRoomScreen = document.getElementById('waitingRoomScreen');
 
@@ -140,6 +143,18 @@ class Game {
     this.socket.on('startGame', () => {
       document.getElementById('waitingRoomScreen').classList.add('hidden');
       this.state = STATE.SELECT;
+    });
+
+    // Host inició la partida — todos arrancan simultáneamente
+    this.socket.on('gameBegun', () => {
+      if (this.state === STATE.SELECT) this._startGame();
+    });
+
+    // Enemigo eliminado por otro cliente — sincronizar
+    this.socket.on('enemyDied', ({ eid }) => {
+      if (!this.wm) return;
+      const enemy = this.wm.enemies.find(e => e.eid === eid && e.alive);
+      if (enemy) { enemy.hp = 0; enemy.alive = false; }
     });
 
     this.socket.on('playerMoved', (playerInfo) => {
@@ -217,7 +232,12 @@ class Game {
       // Boton Jugar
       const pb = s.playBtnBounds;
       if (pb && cx>=pb.x && cx<=pb.x+pb.w && cy>=pb.y && cy<=pb.y+pb.h) {
-        this._startGame();
+        if (this.isHost) {
+          this.socket.emit('hostStartedGame'); // host dispara inicio para todos
+        } else {
+          s.message = '⏳ Esperando al anfitrión...';
+          setTimeout(() => { s.message = ''; }, 2500);
+        }
       }
     }
     
@@ -277,6 +297,8 @@ class Game {
     this.map       = new GameMap();
     this.base      = new Base();
     this.wm        = new WaveManager(this.map, this.particles);
+    // Sync muertes de enemigos a otros clientes
+    this.wm.onEnemyDied = (eid) => { this.socket.emit('enemyDied', { eid }); };
 
     this.pads.forEach(p => p.destroy());
     this.pads = [];

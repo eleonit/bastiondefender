@@ -298,6 +298,8 @@ export class WaveManager {
     this._spawnQueue = [];
     this._spawnTimer = 0;
     this._spawnPoints= getSpawnPoints();
+    this._nextEid    = 0;        // ID incremental por enemigo para sync multijugador
+    this.onEnemyDied = null;     // callback(eid) cuando muere un enemigo localmente
   }
 
   get currentWaveNumber() { return this.waveIndex + 1; }
@@ -342,6 +344,10 @@ export class WaveManager {
       e._counted = true;
       this.kills++;
       this.totalKills++;
+      // Notificar muerte al sistema de sync multijugador
+      if (this.onEnemyDied && e.eid !== undefined) {
+        this.onEnemyDied(e.eid);
+      }
     }
     this.enemies = this.enemies.filter(e => e.alive || !e._counted);
   }
@@ -359,10 +365,7 @@ export class WaveManager {
     for (const group of waveDef) {
       for (let i = 0; i < group.count; i++) queue.push({ type: group.type, interval: group.interval });
     }
-    for (let i = queue.length-1; i > 0; i--) {
-      const j = Math.floor(Math.random()*(i+1));
-      [queue[i], queue[j]] = [queue[j], queue[i]];
-    }
+    // Sin shuffle aleatorio — orden determinístico para sincronización multijugador
     return queue;
   }
 
@@ -374,6 +377,7 @@ export class WaveManager {
           Math.hypot(bestRoute[0].x-sp.x, bestRoute[0].y-sp.y)) bestRoute = route;
     }
     const enemy = createEnemy(type, sp, bestRoute, this.particles);
+    enemy.eid = this._nextEid++; // ID único para sincronización entre clientes
     this.enemies.push(enemy);
   }
 

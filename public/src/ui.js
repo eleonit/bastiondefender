@@ -274,29 +274,45 @@ export function drawCharacterSelect(ctx, W, H, selectState, time) {
     ctx.restore();
   });
 
-  // ── Botón JUGAR ──
-  const pbW = Math.min(W * 0.20, 260);
+  // ── Botón JUGAR / LISTO ──
+  const pbW = Math.min(W * 0.22, 280);
   const pbH = Math.max(H * 0.070, 40);
   const pbX = W / 2 - pbW / 2;
   const pbY = detY + detH + (H - detY - detH - pbH) / 2;
   const p   = 0.7 + 0.3 * Math.sin(time * 3);
 
+  const isHost   = selectState.isHost;
+  const btnColor = isHost ? '#ffd700' : '#3498db';
+  const btnLabel = isHost ? '▶  INICIAR PARTIDA' : '✓  LISTO';
+
   ctx.save();
-  ctx.fillStyle   = `rgba(255,215,0,${p * 0.92})`;
-  ctx.strokeStyle = '#ffd700';
+  ctx.fillStyle   = isHost ? `rgba(255,215,0,${p * 0.92})` : `rgba(52,152,219,${p * 0.85})`;
+  ctx.strokeStyle = btnColor;
   ctx.lineWidth   = 3;
-  ctx.shadowColor = '#ffd700';
-  ctx.shadowBlur  = 22 * p;
+  ctx.shadowColor = btnColor;
+  ctx.shadowBlur  = 18 * p;
   _roundRect(ctx, pbX, pbY, pbW, pbH, 12);
   ctx.fill();
   ctx.stroke();
-  ctx.font          = `bold ${Math.round(pbH * 0.36)}px 'Press Start 2P', monospace`;
+  ctx.font          = `bold ${Math.round(pbH * 0.32)}px 'Press Start 2P', monospace`;
   ctx.fillStyle     = '#000';
   ctx.textAlign     = 'center';
   ctx.textBaseline  = 'middle';
   ctx.shadowBlur    = 0;
-  ctx.fillText('▶  JUGAR', W / 2, pbY + pbH / 2);
+  ctx.fillText(btnLabel, W / 2, pbY + pbH / 2);
   ctx.restore();
+
+  // Mensaje temporal (ej. "Esperando al anfitrión...")
+  if (selectState.message) {
+    ctx.save();
+    ctx.font      = `bold ${Math.round(H * 0.022)}px 'Exo 2', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffcc44';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur  = 6;
+    ctx.fillText(selectState.message, W / 2, pbY + pbH + H * 0.035);
+    ctx.restore();
+  }
 
   selectState.playBtnBounds = { x: pbX, y: pbY, w: pbW, h: pbH };
 }
