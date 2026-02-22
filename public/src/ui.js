@@ -265,7 +265,7 @@ export function drawLeaderboard(ctx, W, H, scores) {
 
   ctx.font = `${Math.round(panH*0.058)}px 'Exo 2',sans-serif`;
   ctx.fillStyle = '#888';
-  ctx.fillText('#   J    Oleadas   Kills   Resultado   Fecha', W/2, panY + panH*0.16);
+  ctx.fillText('#   Jugadores   Oleadas   Kills   Resultado   Fecha', W/2, panY + panH*0.16);
 
   if (!scores || scores.length === 0) {
     ctx.fillStyle = '#666';
@@ -276,8 +276,12 @@ export function drawLeaderboard(ctx, W, H, scores) {
       const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'  ';
       ctx.fillStyle = i < 3 ? '#ffd700' : '#ccc';
       ctx.font = `${Math.round(panH*0.066)}px 'Exo 2',sans-serif`;
+      
+      const names = s.player_names || `${s.player_count}P`;
+      const truncatedNames = names.length > 15 ? names.substring(0, 12) + '...' : names;
+
       ctx.fillText(
-        `${medal} ${i+1}  ${s.player_count}P   ${s.waves_survived}   ${s.total_kills}   ${s.victory?'Victoria':'Derrota'}  ${s.fecha}`,
+        `${medal} ${i+1}  ${truncatedNames}   ${s.waves_survived}   ${s.total_kills}   ${s.victory?'Victoria':'Derrota'}  ${s.fecha}`,
         W/2, ry
       );
     });

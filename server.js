@@ -44,11 +44,20 @@ async function initDB() {
         id SERIAL PRIMARY KEY,
         session_id UUID DEFAULT gen_random_uuid(),
         player_count INT NOT NULL DEFAULT 1,
+        player_names TEXT,
         waves_survived INT NOT NULL DEFAULT 0,
         total_kills INT NOT NULL DEFAULT 0,
         victory BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT NOW()
       );
+
+      -- Ensure player_names exists if table was created before
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='scores' AND column_name='player_names') THEN
+          ALTER TABLE scores ADD COLUMN player_names TEXT;
+        END IF;
+      END $$;
 
       CREATE TABLE IF NOT EXISTS global_stats (
         id INT PRIMARY KEY DEFAULT 1,
@@ -143,15 +152,15 @@ app.get('/api/scores', async (req, res) => {
 
 // POST /api/scores - Guardar puntaje de una partida
 app.post('/api/scores', async (req, res) => {
-  const { player_count, waves_survived, total_kills, victory } = req.body;
+  const { player_count, player_names, waves_survived, total_kills, victory } = req.body;
   if (player_count == null || waves_survived == null || total_kills == null) {
     return res.status(400).json({ success: false, message: 'Faltan datos de la partida' });
   }
   try {
     const insertResult = await pool.query(
-      `INSERT INTO scores (player_count, waves_survived, total_kills, victory)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [player_count, waves_survived, total_kills, !!victory]
+      `INSERT INTO scores (player_count, player_names, waves_survived, total_kills, victory)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [player_count, player_names || '', waves_survived, total_kills, !!victory]
     );
 
     // Actualizar estadisticas globales
