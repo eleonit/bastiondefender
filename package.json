@@ -1,7 +1,7 @@
 {
   "name": "bastion-defenders",
   "version": "1.0.0",
-  "description": "Juego 2D cooperativo local - Defiende la base de hordas de orcos y criaturas mitologicas",
+  "description": "El ultimo Leon - Juego 2D cooperativo local - Defiende la base de hordas de enemigos",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -21,7 +21,7 @@ export function drawCharacterSelect(ctx, W, H, selectState, time) {
   ctx.fillStyle = '#ffd700';
   ctx.shadowColor = '#ffd700';
   ctx.shadowBlur = 20;
-  ctx.fillText('⚔️  BASTION DEFENDERS  🛡️', W/2, H*0.12);
+  ctx.fillText('⚔️  EL ULTIMO LEON  🛡️', W/2, H*0.12);
   ctx.shadowBlur = 0;
   ctx.restore();
 
