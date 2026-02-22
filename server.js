@@ -31,13 +31,20 @@ function getLocalIP() {
 const LOCAL_IP = getLocalIP();
 
 // --- Database ---
-const pool = new Pool({
+const hasDB = !!process.env.DATABASE_URL;
+
+const pool = hasDB ? new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
+}) : null;
 
 // Init DB schema on startup
 async function initDB() {
+  if (!hasDB) {
+    console.log('ℹ️ No se ha detectado DATABASE_URL en .env. El servidor funcionará en modo "sin persistencia".');
+    return;
+  }
+  
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS scores (
@@ -77,7 +84,7 @@ async function initDB() {
     `);
     console.log('✅ Base de datos inicializada correctamente');
   } catch (err) {
-    console.error('⚠️ Error iniciando DB (puede que no haya DB configurada):', err.message);
+    console.error('⚠️ Error iniciando DB (puede que la configuración sea incorrecta):', err.message);
   }
 }
 
@@ -141,6 +148,7 @@ io.on('connection', (socket) => {
 
 // GET /api/scores - Top 10 mejores puntajes
 app.get('/api/scores', async (req, res) => {
+  if (!hasDB) return res.json({ success: true, scores: [] });
   try {
     const result = await pool.query(
       `SELECT id, player_count, player_names, player_levels, player_stats, waves_survived, total_kills, victory,
@@ -159,9 +167,13 @@ app.get('/api/scores', async (req, res) => {
 // POST /api/scores - Guardar puntaje de una partida
 app.post('/api/scores', async (req, res) => {
   const { player_count, player_names, player_levels, player_stats, waves_survived, total_kills, victory } = req.body;
+  
   if (player_count == null || waves_survived == null || total_kills == null) {
     return res.status(400).json({ success: false, message: 'Faltan datos de la partida' });
   }
+
+  if (!hasDB) return res.json({ success: true, message: 'Score record omitido (sin DB)' });
+
   try {
     const insertResult = await pool.query(
       `INSERT INTO scores (player_count, player_names, player_levels, player_stats, waves_survived, total_kills, victory)
@@ -189,6 +201,7 @@ app.post('/api/scores', async (req, res) => {
 
 // GET /api/stats - Estadisticas globales
 app.get('/api/stats', async (req, res) => {
+  if (!hasDB) return res.json({ success: true, stats: { total_games: 0, total_kills: 0, total_victories: 0 } });
   try {
     const result = await pool.query('SELECT * FROM global_stats WHERE id = 1');
     res.json({ success: true, stats: result.rows[0] || {} });
