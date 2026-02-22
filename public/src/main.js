@@ -115,6 +115,7 @@ class Game {
         this.remotePlayers[playerInfo.id].x = playerInfo.x;
         this.remotePlayers[playerInfo.id].y = playerInfo.y;
         if (playerInfo.level) this.remotePlayers[playerInfo.id].level = playerInfo.level;
+        if (playerInfo.statsInvested) this.remotePlayers[playerInfo.id].statsInvested = playerInfo.statsInvested;
       }
     });
 
@@ -298,9 +299,14 @@ class Game {
         const oldX = player.x, oldY = player.y;
         player.move(inp.dx, inp.dy, dt);
         
-        // Sync movimiento si cambió (ahora incluye nivel)
+        // Sync movimiento si cambió (ahora incluye nivel y stats)
         if (oldX !== player.x || oldY !== player.y) {
-          this.socket.emit('playerMovement', { x: player.x, y: player.y, level: player.level });
+          this.socket.emit('playerMovement', { 
+            x: player.x, 
+            y: player.y, 
+            level: player.level,
+            statsInvested: player.statsInvested
+          });
         }
 
         // Habilidades
@@ -361,10 +367,18 @@ class Game {
     const remoteLevels = Object.values(this.remotePlayers).map(p => p.level || 1);
     const allLevels = [localLevel, ...remoteLevels].join(', ');
 
+    const localStats = this.players[0]?.statsInvested ? 
+      `A:${this.players[0].statsInvested.atk},H:${this.players[0].statsInvested.hp},S:${this.players[0].statsInvested.speed}` : '';
+    const remoteStatsArr = Object.values(this.remotePlayers).map(p => 
+      p.statsInvested ? `A:${p.statsInvested.atk},H:${p.statsInvested.hp},S:${p.statsInvested.speed}` : '?'
+    );
+    const allStatsStr = [localStats, ...remoteStatsArr].filter(Boolean).join(' | ');
+
     const stats = {
       playerCount:   1 + Object.keys(this.remotePlayers).length,
       playerNames:   allNames,
       playerLevels:  allLevels,
+      playerStats:   allStatsStr,
       wavesSurvived: this.wm.wavesCleared,
       totalWaves:    this.wm.totalWaves,
       totalKills:    this.wm.totalKills,
@@ -380,6 +394,7 @@ class Game {
           player_count:   stats.playerCount,
           player_names:   stats.playerNames,
           player_levels:  stats.playerLevels,
+          player_stats:   stats.playerStats,
           waves_survived: stats.wavesSurvived,
           total_kills:    stats.total_kills,
           victory:        stats.victory,

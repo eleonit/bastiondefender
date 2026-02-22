@@ -60,6 +60,9 @@ async function initDB() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='scores' AND column_name='player_levels') THEN
           ALTER TABLE scores ADD COLUMN player_levels TEXT;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='scores' AND column_name='player_stats') THEN
+          ALTER TABLE scores ADD COLUMN player_stats TEXT;
+        END IF;
       END $$;
 
       CREATE TABLE IF NOT EXISTS global_stats (
@@ -140,7 +143,7 @@ io.on('connection', (socket) => {
 app.get('/api/scores', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, player_count, player_names, player_levels, waves_survived, total_kills, victory,
+      `SELECT id, player_count, player_names, player_levels, player_stats, waves_survived, total_kills, victory,
               to_char(created_at, 'DD/MM/YYYY HH24:MI') as fecha
        FROM scores
        ORDER BY waves_survived DESC, total_kills DESC
@@ -155,15 +158,15 @@ app.get('/api/scores', async (req, res) => {
 
 // POST /api/scores - Guardar puntaje de una partida
 app.post('/api/scores', async (req, res) => {
-  const { player_count, player_names, player_levels, waves_survived, total_kills, victory } = req.body;
+  const { player_count, player_names, player_levels, player_stats, waves_survived, total_kills, victory } = req.body;
   if (player_count == null || waves_survived == null || total_kills == null) {
     return res.status(400).json({ success: false, message: 'Faltan datos de la partida' });
   }
   try {
     const insertResult = await pool.query(
-      `INSERT INTO scores (player_count, player_names, player_levels, waves_survived, total_kills, victory)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [player_count, player_names || '', player_levels || '', waves_survived, total_kills, !!victory]
+      `INSERT INTO scores (player_count, player_names, player_levels, player_stats, waves_survived, total_kills, victory)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [player_count, player_names || '', player_levels || '', player_stats || '', waves_survived, total_kills, !!victory]
     );
 
     // Actualizar estadisticas globales
