@@ -47,6 +47,12 @@ class Game {
     this.scores   = [];
     this._leaderboardBtns = null;
     this._floatingTexts = [];
+    this.uiState = {
+      showStats: false,
+      hudButtons: null,
+      statButtons: [],
+      closeStatsBtn: null
+    };
 
     this._resize();
     this._bindEvents();
@@ -167,6 +173,47 @@ class Game {
         this._startGame();
       }
     }
+    
+    // Controles durante el juego
+    if (this.state === STATE.PLAYING) {
+      const u = this.uiState;
+      const player = this.players[0];
+
+      // Botones HUD
+      if (u.hudButtons) {
+        const hb = u.hudButtons.stats;
+        if (cx >= hb.x && cx <= hb.x + hb.w && cy >= hb.y && cy <= hb.y + hb.h) {
+          u.showStats = !u.showStats;
+          document.getElementById('controlsOverlay').style.display = u.showStats ? 'none' : 'block';
+          return;
+        }
+        const qb = u.hudButtons.quit;
+        if (cx >= qb.x && cx <= qb.x + qb.w && cy >= qb.y && cy <= qb.y + qb.h) {
+          if (confirm('¿Estás seguro de que quieres salir de la partida?')) {
+            this._reset();
+          }
+          return;
+        }
+      }
+
+      // Panel de Stats
+      if (u.showStats) {
+        // Asignar puntos
+        u.statButtons.forEach(b => {
+          if (cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h) {
+            player.allocateStat(b.type);
+          }
+        });
+        // Boton Cerrar
+        const cb = u.closeStatsBtn;
+        if (cb && cx >= cb.x && cx <= cb.x + cb.w && cy >= cb.y && cy <= cb.y + cb.h) {
+          u.showStats = false;
+          document.getElementById('controlsOverlay').style.display = 'block';
+        }
+        return; // Bloquear otros clics si el panel está abierto
+      }
+    }
+
     if ((this.state === STATE.GAME_OVER || this.state === STATE.VICTORY) && this._leaderboardBtns) {
       const rb = this._leaderboardBtns.restartBtn;
       if (rb && cx>=rb.x && cx<=rb.x+rb.w && cy>=rb.y && cy<=rb.y+rb.h) {
@@ -211,6 +258,12 @@ class Game {
     document.getElementById('controlsOverlay').innerHTML = '';
     this.state = STATE.SELECT;
     this.scores = [];
+    this.uiState.showStats = false;
+    
+    // Si estamos conectados, notificar salida
+    if (this.socket) {
+      this.socket.emit('playerLeave');
+    }
   }
 
   // ─────────────────────────────────────
@@ -233,6 +286,9 @@ class Game {
     const { players, wm, base, particles } = this;
     const player = players[0];
     const pad = this.pads[0];
+
+    // No permitir acciones si el panel de stats está abierto
+    if (this.uiState.showStats) return;
 
     if (player && pad) {
       if (player.alive) {
@@ -391,7 +447,10 @@ class Game {
 
       ctx.restore();
 
-      drawHUD(ctx, W, H, this.players, this.wm, this.base);
+      drawHUD(ctx, W, H, this.players, this.wm, this.base, this.players[0], this.uiState);
+      if (this.uiState.showStats) {
+        drawStatsPanel(ctx, W, H, this.players[0], this.uiState);
+      }
     }
 
     if (this.state === STATE.GAME_OVER) {

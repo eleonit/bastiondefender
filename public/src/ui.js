@@ -148,8 +148,7 @@ export function drawCharacterSelect(ctx, W, H, selectState, time) {
 
 // ─────────────────────────────────────
 // HUD (durante el juego)
-// ─────────────────────────────────────
-export function drawHUD(ctx, W, H, players, waveManager, base) {
+export function drawHUD(ctx, W, H, players, waveManager, base, player, uiState) {
   // Barra superior — oleada y descansho
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -180,6 +179,104 @@ export function drawHUD(ctx, W, H, players, waveManager, base) {
     ctx.textAlign = 'right';
     ctx.fillText(`Kills totales: ${waveManager.totalKills}`, W - 10, 19);
   }
+
+  // BOTONES HUD (Esquina superior izquierda)
+  const btnW = 80, btnH = 26, gap = 8;
+  const statsX = 10, quitX = statsX + btnW + gap, btnY = 6;
+  
+  // Boton Stats
+  ctx.fillStyle = player?.statPoints > 0 ? '#ffcc00' : '#444';
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+  _roundRect(ctx, statsX, btnY, btnW, btnH, 5);
+  ctx.fill(); ctx.stroke();
+  ctx.font = 'bold 9px "Press Start 2P"';
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.fillText('STATS', statsX + btnW/2, btnY + btnH/2 + 1);
+  if (player?.statPoints > 0) {
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath(); ctx.arc(statsX + btnW, btnY, 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 8px monospace';
+    ctx.fillText(player.statPoints, statsX + btnW, btnY + 3);
+  }
+
+  // Boton Salir
+  ctx.fillStyle = '#aa2222';
+  _roundRect(ctx, quitX, btnY, btnW, btnH, 5);
+  ctx.fill(); ctx.stroke();
+  ctx.font = 'bold 9px "Press Start 2P"';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('SALIR', quitX + btnW/2, btnY + btnH/2 + 1);
+
+  // Guardar bounds para clics
+  if (uiState) {
+    uiState.hudButtons = {
+      stats: { x: statsX, y: btnY, w: btnW, h: btnH },
+      quit: { x: quitX, y: btnY, w: btnW, h: btnH }
+    };
+  }
+
+  ctx.restore();
+}
+
+/** 
+ * PANEL DE ESTADÍSTICAS
+ */
+export function drawStatsPanel(ctx, W, H, player, uiState) {
+  const panW = 320, panH = 340;
+  const panX = W/2 - panW/2, panY = H/2 - panH/2;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.92)';
+  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
+  _roundRect(ctx, panX, panY, panW, panH, 15);
+  ctx.fill(); ctx.stroke();
+
+  // Titulo
+  ctx.font = 'bold 16px "Press Start 2P"';
+  ctx.fillStyle = '#ffd700'; ctx.textAlign = 'center';
+  ctx.fillText('ESTADÍSTICAS', W/2, panY + 40);
+
+  // Stats
+  ctx.font = '14px "Press Start 2P"';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff';
+  const startX = panX + 30;
+  ctx.fillText(`Nivel: ${player.level}`, startX, panY + 80);
+  ctx.fillText(`Puntos: ${player.statPoints}`, startX, panY + 110);
+
+  const stats = [
+    { label: '⚔️ ATK', val: player.atk, type: 'atk' },
+    { label: '❤️ HP ', val: player.maxHp, type: 'hp' },
+    { label: '🏃 SPD', val: player.speed.toFixed(1), type: 'speed' }
+  ];
+
+  uiState.statButtons = [];
+  stats.forEach((s, i) => {
+    const y = panY + 160 + i * 50;
+    ctx.fillText(`${s.label}: ${s.val}`, startX, y);
+    
+    if (player.statPoints > 0) {
+      const bx = panX + panW - 60, bw = 30, bh = 30;
+      ctx.fillStyle = '#ffd700';
+      _roundRect(ctx, bx, y - 20, bw, bh, 5);
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText('+', bx + 9, y + 4);
+      uiState.statButtons.push({ x: bx, y: y - 20, w: bw, h: bh, type: s.type });
+    }
+  });
+
+  // Boton Cerrar
+  const cbW = 120, cbH = 35, cbX = W/2 - cbW/2, cbY = panY + panH - 50;
+  ctx.fillStyle = '#444';
+  _roundRect(ctx, cbX, cbY, cbW, cbH, 8);
+  ctx.fill(); ctx.stroke();
+  ctx.font = 'bold 11px "Press Start 2P"';
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.fillText('CERRAR', W/2, cbY + cbH/2 + 2);
+  uiState.closeStatsBtn = { x: cbX, y: cbY, w: cbW, h: cbH };
+
   ctx.restore();
 }
 

@@ -37,6 +37,9 @@ export class Player {
     this.level = 1;
     this.xp = 0;
     this.nextLevelXp = CONFIG.XP_PER_LEVEL[1] || 100;
+    this.statPoints = 0;
+    // Stats asignados manualmente
+    this.statsInvested = { atk: 0, hp: 0, speed: 0 };
   }
 
   gainXp(amount) {
@@ -50,16 +53,31 @@ export class Player {
   levelUp() {
     this.level++;
     this.nextLevelXp = CONFIG.XP_PER_LEVEL[this.level] || this.nextLevelXp * 2;
-    
-    // Escalar estadísticas (10% por nivel)
-    const oldMax = this.maxHp;
-    this.maxHp = Math.round(this.maxHp * 1.1);
-    this.hp += Math.round((this.maxHp - this.hp) * 0.5); // Curar 50% de lo que falta
-    this.atk = Math.round(this.atk * 1.1);
+    this.statPoints += 3; // Otorgar 3 puntos por nivel
+
+    // Curación parcial automática al subir (50% de lo faltante)
+    this.hp += Math.round((this.maxHp - this.hp) * 0.5);
     
     // Efecto visual
     this.particles.emitMagic(this.x, this.y, '#ffff00', 30, 45);
     this.particles.shockwaves.push({ x:this.x, y:this.y, r:5, maxR:80, alpha:1, color:'#ffff00', speed:300 });
+  }
+
+  allocateStat(type) {
+    if (this.statPoints <= 0) return false;
+    this.statPoints--;
+    this.statsInvested[type]++;
+
+    if (type === 'atk') {
+      this.atk = Math.round(this.atk * 1.1);
+    } else if (type === 'hp') {
+      const oldMax = this.maxHp;
+      this.maxHp = Math.round(this.maxHp * 1.1);
+      this.hp += (this.maxHp - oldMax); // Sumar la vida ganada a la actual
+    } else if (type === 'speed') {
+      this.speed *= 1.05;
+    }
+    return true;
   }
 
   get effectiveSpeed()   { return this.speed   * (1 + this.speedBuff); }
