@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bastion-defender-v1';
+const CACHE_NAME = 'bastion-defender-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -18,7 +18,20 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
-    })
+    }).then(() => self.skipWaiting()) // Activar inmediatamente sin esperar
+  );
+});
+
+// Eliminar cachés viejos al activar la nueva versión
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter(name => name !== CACHE_NAME)
+          .map(name => caches.delete(name))
+      );
+    }).then(() => self.clients.claim()) // Tomar control de todas las páginas abiertas
   );
 });
 
