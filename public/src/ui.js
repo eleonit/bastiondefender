@@ -62,9 +62,10 @@ export function drawCharacterSelect(ctx, W, H, selectState, time) {
 
   // Panel de seleccion de clases por jugador
   const n = selectState.playerCount;
+  const isMobile = W < 768;
   const classCount = CLASS_NAMES.length;
-  const panelW = Math.min(W*0.95/n, W*0.22);
-  const panelH = H*0.50;
+  const panelW = isMobile ? Math.min(W*0.9/n, W*0.28) : Math.min(W*0.95/n, W*0.22);
+  const panelH = isMobile ? H*0.65 : H*0.50;
   const panelStartX = W/2 - (n * panelW + (n-1)*W*0.01)/2;
   const panelY = H*0.37;
 
@@ -180,9 +181,12 @@ export function drawHUD(ctx, W, H, players, waveManager, base, player, uiState) 
     ctx.fillText(`Kills totales: ${waveManager.totalKills}`, W - 10, 19);
   }
 
-  // BOTONES HUD (Esquina superior izquierda)
-  const btnW = 80, btnH = 26, gap = 8;
-  const statsX = 10, quitX = statsX + btnW + gap, btnY = 6;
+  // BOTONES HUD (Esquina superior izquierda) — Escalados para movil
+  const isMobile = W < 768;
+  const btnW = isMobile ? 110 : 80;
+  const btnH = isMobile ? 38 : 26;
+  const gap = 10;
+  const statsX = 10, quitX = statsX + btnW + gap, btnY = (38 - btnH) / 2;
   
   // Boton Stats
   ctx.fillStyle = player?.statPoints > 0 ? '#ffcc00' : '#444';
@@ -222,7 +226,9 @@ export function drawHUD(ctx, W, H, players, waveManager, base, player, uiState) 
  * PANEL DE ESTADÍSTICAS
  */
 export function drawStatsPanel(ctx, W, H, player, uiState) {
-  const panW = 320, panH = 340;
+  const isMobile = W < 768;
+  const panW = isMobile ? Math.min(W * 0.9, 360) : 320;
+  const panH = isMobile ? Math.min(H * 0.8, 400) : 340;
   const panX = W/2 - panW/2, panY = H/2 - panH/2;
 
   ctx.save();

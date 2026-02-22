@@ -413,7 +413,8 @@ class Game {
 
   _render() {
     const { ctx, W, H, time } = this;
-    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#1a2e1a'; // Match background color
+    ctx.fillRect(0, 0, W, H);
 
     if (this.state === STATE.LOGIN) return; // Se renderiza por HTML/CSS
 
