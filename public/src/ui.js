@@ -325,11 +325,15 @@ export function drawRemotePlayers(ctx, remotePlayers, time) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Nombre
-    ctx.font = 'bold 10px "Exo 2", sans-serif';
+    // Nombre + Nivel
+    ctx.font = 'bold 9px "Press Start 2P", monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#fff';
-    ctx.fillText(p.name, 0, -22);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    const remoteLabel = `${p.name || ''} Lvl ${p.level || 1}`;
+    ctx.strokeText(remoteLabel, 0, -22);
+    ctx.fillText(remoteLabel, 0, -22);
     
     ctx.restore();
   });

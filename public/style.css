@@ -217,6 +217,35 @@ body {
   transition: height 0.05s linear;
   pointer-events: none;
 }
+
+/* Bloqueo por nivel */
+.lock-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
+  color: #aaa;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+}
+.lock-overlay br { display: block; content: ""; margin-top: 5px; }
+
+.action-btn.locked {
+  filter: grayscale(0.8) brightness(0.7);
+  cursor: default;
+}
+.action-btn.locked .lock-overlay {
+  display: flex;
+}
+.action-btn.locked .btn-icon, 
+.action-btn.locked .btn-label {
+  opacity: 0.2;
+}
 .attack-btn {
   border-radius: 10px;
   border: 2px solid rgba(255, 255, 255, 0.3);

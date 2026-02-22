@@ -108,6 +108,7 @@ class Game {
       if (this.remotePlayers[playerInfo.id]) {
         this.remotePlayers[playerInfo.id].x = playerInfo.x;
         this.remotePlayers[playerInfo.id].y = playerInfo.y;
+        if (playerInfo.level) this.remotePlayers[playerInfo.id].level = playerInfo.level;
       }
     });
 
@@ -241,9 +242,9 @@ class Game {
         const oldX = player.x, oldY = player.y;
         player.move(inp.dx, inp.dy, dt);
         
-        // Sync movimiento si cambió
+        // Sync movimiento si cambió (ahora incluye nivel)
         if (oldX !== player.x || oldY !== player.y) {
-          this.socket.emit('playerMovement', { x: player.x, y: player.y });
+          this.socket.emit('playerMovement', { x: player.x, y: player.y, level: player.level });
         }
 
         // Habilidades
@@ -268,7 +269,7 @@ class Game {
 
         if (inp.attack) player.autoAttack(wm.enemies, dt);
       }
-      pad.update(dt);
+      pad.update(dt, player.level);
     }
 
     players.forEach(p => {

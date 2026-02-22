@@ -368,7 +368,12 @@ export class Enemy {
     if (!this.alive) return;
     this.hp-=amount; this._hitFlash=0.15;
     this.particles.emit(this.x,this.y,'#ffcc44',4,2,0.15);
-    if (this.hp<=0) { this.hp=0; this.alive=false; this._onDeath(); }
+    if (this.hp<=0) {
+      this.hp=0; this.alive=false; this._onDeath();
+      if (source && typeof source.gainXp === 'function') {
+        source.gainXp(this.data.xp || 5);
+      }
+    }
   }
 
   _onDeath() {

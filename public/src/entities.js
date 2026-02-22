@@ -1,7 +1,7 @@
 // ============================================================
 // ENTITIES.JS — Jugadores con fisonomia dibujada + habilidades
 // ============================================================
-import { GAME_W, GAME_H, PLAYER_COLORS, CLASSES, CLASS_NAMES } from './constants.js';
+import { GAME_W, GAME_H, PLAYER_COLORS, CLASSES, CLASS_NAMES, CONFIG } from './constants.js';
 
 // ── Helpers de dibujo ──────────────────────────────────────
 function roundRect(ctx, x, y, w, h, r) {
@@ -32,6 +32,34 @@ export class Player {
     this._hitFlash = 0; this._walkTime = 0; this._walkAnim = 0;
     this.projectiles = []; this.activeEffects = []; this.imp = null;
     this._cast = null; // { index, timer, duration, enemies, players, base, time }
+    
+    // Progresión
+    this.level = 1;
+    this.xp = 0;
+    this.nextLevelXp = CONFIG.XP_PER_LEVEL[1] || 100;
+  }
+
+  gainXp(amount) {
+    if (!this.alive) return;
+    this.xp += amount;
+    while (this.xp >= this.nextLevelXp && this.level < CONFIG.XP_PER_LEVEL.length - 1) {
+      this.levelUp();
+    }
+  }
+
+  levelUp() {
+    this.level++;
+    this.nextLevelXp = CONFIG.XP_PER_LEVEL[this.level] || this.nextLevelXp * 2;
+    
+    // Escalar estadísticas (10% por nivel)
+    const oldMax = this.maxHp;
+    this.maxHp = Math.round(this.maxHp * 1.1);
+    this.hp += Math.round((this.maxHp - this.hp) * 0.5); // Curar 50% de lo que falta
+    this.atk = Math.round(this.atk * 1.1);
+    
+    // Efecto visual
+    this.particles.emitMagic(this.x, this.y, '#ffff00', 30, 45);
+    this.particles.shockwaves.push({ x:this.x, y:this.y, r:5, maxR:80, alpha:1, color:'#ffff00', speed:300 });
   }
 
   get effectiveSpeed()   { return this.speed   * (1 + this.speedBuff); }
@@ -41,6 +69,10 @@ export class Player {
 
   // Inicia canal de lanzamiento; el efecto se dispara despues de castTime
   startCast(index, enemies, players, base, time) {
+    // Verificar requerimiento de nivel
+    const reqLevel = CONFIG.ABILITY_UNLOCK_LEVELS[index] || 1;
+    if (this.level < reqLevel) return;
+
     const ab = this.classData.abilities[index];
     const castTime = ab.castTime || 0;
     if (castTime <= 0) {
@@ -219,14 +251,31 @@ export class Player {
   }
 
   _drawHP(ctx) {
-    const bw = 28, bh = 5, bx = this.x-bw/2, by = this.y-this.radius-14;
+    const bw = 32, bh = 5, bx = this.x-bw/2, by = this.y-this.radius-18;
+    // Fondo barra HP
     ctx.fillStyle='#111'; ctx.fillRect(bx-1,by-1,bw+2,bh+2);
-    const pct = this.hp/this.maxHp;
-    ctx.fillStyle = pct>0.5?'#44cc44':pct>0.25?'#ffaa00':'#ff4444';
-    ctx.fillRect(bx, by, bw*pct, bh);
-    ctx.font='bold 8px "Exo 2",sans-serif';
+    const hpPct = this.hp/this.maxHp;
+    ctx.fillStyle = hpPct>0.5?'#44cc44':hpPct>0.25?'#ffaa00':'#ff4444';
+    ctx.fillRect(bx, by, bw*hpPct, bh);
+    
+    // Barra de XP (pequeña debajo de HP)
+    const xpbh = 2;
+    const xpby = by + bh + 2;
+    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(bx, xpby, bw, xpbh);
+    const xpPct = Math.min(1, this.xp / this.nextLevelXp);
+    ctx.fillStyle = '#4488ff';
+    ctx.fillRect(bx, xpby, bw*xpPct, xpbh);
+
+    // Texto Nivel + J
+    ctx.font='bold 9px "Press Start 2P", monospace';
+    if (ctx.font.includes('Press Start 2P')) { // Fallback if font not loaded
+       ctx.font='bold 8px monospace';
+    }
     ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(`J${this.idx+1}`, this.x, by-7);
+    ctx.strokeStyle='#000'; ctx.lineWidth=2;
+    const label = `Lvl ${this.level} J${this.idx+1}`;
+    ctx.strokeText(label, this.x, by-10);
+    ctx.fillText(label, this.x, by-10);
   }
 }
 

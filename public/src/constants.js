@@ -170,6 +170,8 @@ export const CONFIG = {
   REGEN_BETWEEN_WAVES: 0.10, // 10% de vida regenerada entre oleadas
   GOLD_PER_KILL: 0,          // (para futura expansion de upgrades)
   MAX_PLAYERS: 6,
+  XP_PER_LEVEL: [0, 100, 250, 500, 900, 1500, 2300, 3500, 5000, 7500, 12000], // XP para nivel i
+  ABILITY_UNLOCK_LEVELS: [1, 3, 6, 10], 
 };
 
 // Posiciones del panel de control por jugador (porcentaje de pantalla)

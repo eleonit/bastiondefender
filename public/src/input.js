@@ -3,7 +3,7 @@
 // VirtualPad: crea y gestiona los paneles de control en DOM
 // TouchInput: maneja eventos touch y traduce a acciones de jugador
 // ============================================================
-import { PAD_POSITIONS, PLAYER_COLORS, CLASSES, CLASS_NAMES } from './constants.js';
+import { PAD_POSITIONS, PLAYER_COLORS, CLASSES, CLASS_NAMES, CONFIG } from './constants.js';
 
 // Estado de entrada para cada jugador
 export class PlayerInput {
@@ -36,6 +36,7 @@ export class VirtualPad {
     this.activeTouchId = { joy: null, atk: null, ab: [null,null,null,null] };
     this.cooldowns = [0,0,0,0]; // tiempo restante por habilidad
     this.abilityBtns = [];
+    this.playerLevel = 1;
     this._onSizeReady = onSizeReady;
     this._build();
   }
@@ -130,6 +131,7 @@ export class VirtualPad {
         <span class="btn-icon">${ab.icon}</span>
         <span class="btn-label">${this._abbr(ab.name)}</span>
         <div class="cooldown-overlay" style="height:0%"></div>
+        <div class="lock-overlay">🔒<br>Lvl ${CONFIG.ABILITY_UNLOCK_LEVELS[i] || 1}</div>
       `;
       btn.title = ab.description;
       grid.appendChild(btn);
@@ -214,7 +216,8 @@ export class VirtualPad {
       btn.addEventListener('touchstart', e => {
         e.preventDefault();
         const t = e.changedTouches[0];
-        if (this.activeTouchId.ab[i] == null && this.cooldowns[i] <= 0) {
+        const reqLvl = CONFIG.ABILITY_UNLOCK_LEVELS[i] || 1;
+        if (this.activeTouchId.ab[i] == null && this.cooldowns[i] <= 0 && this.playerLevel >= reqLvl) {
           this.activeTouchId.ab[i] = t.identifier;
           this.input.abilityJustPressed[i] = true;
           btn.classList.add('pressed');
@@ -253,7 +256,8 @@ export class VirtualPad {
     this.abilityBtns.forEach((btn, i) => {
       btn.addEventListener('mousedown', e => {
         e.preventDefault();
-        if (this.cooldowns[i] <= 0) {
+        const reqLvl = CONFIG.ABILITY_UNLOCK_LEVELS[i] || 1;
+        if (this.cooldowns[i] <= 0 && this.playerLevel >= reqLvl) {
           this.input.abilityJustPressed[i] = true;
           btn.classList.add('pressed');
           setTimeout(() => btn.classList.remove('pressed'), 150);
@@ -275,12 +279,19 @@ export class VirtualPad {
     this.input.dy = ky / this.joyRadius;
   }
 
-  // Llamar cada frame con dt en segundos
+  // Llamar cada frame con dt en segundos y nivel actual del jugador
   // IMPORTANTE: leer abilityJustPressed ANTES de llamar update()
   // update() limpia las flags AL FINAL para que duren exactamente un frame
-  update(dt) {
+  update(dt, currentLevel = 1) {
+    this.playerLevel = currentLevel;
+    
     // 1) Actualizar cooldowns y UI
     for (let i = 0; i < 4; i++) {
+      const reqLvl = CONFIG.ABILITY_UNLOCK_LEVELS[i] || 1;
+      const isLocked = this.playerLevel < reqLvl;
+      
+      this.abilityBtns[i].classList.toggle('locked', isLocked);
+
       if (this.cooldowns[i] > 0) {
         this.cooldowns[i] = Math.max(0, this.cooldowns[i] - dt);
         const pct = (this.cooldowns[i] / this.classData.abilities[i].cd) * 100;
