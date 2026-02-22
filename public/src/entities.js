@@ -697,12 +697,15 @@ export class Warlock extends Player {
 // Factory
 export function createPlayer(className, x, y, playerIndex, particles) {
   const d = CLASSES[className];
+  let p;
   switch(className) {
-    case 'Caballero': return new Knight(x,y,d,playerIndex,particles);
-    case 'Arquero':   return new Archer(x,y,d,playerIndex,particles);
-    case 'Mago':      return new Mage(x,y,d,playerIndex,particles);
-    case 'Asesino':   return new Assassin(x,y,d,playerIndex,particles);
-    case 'Brujo':     return new Warlock(x,y,d,playerIndex,particles);
-    default:          return new Knight(x,y,d,playerIndex,particles);
+    case 'Caballero': p = new Knight(x,y,d,playerIndex,particles); break;
+    case 'Arquero':   p = new Archer(x,y,d,playerIndex,particles); break;
+    case 'Mago':      p = new Mage(x,y,d,playerIndex,particles); break;
+    case 'Asesino':   p = new Assassin(x,y,d,playerIndex,particles); break;
+    case 'Brujo':     p = new Warlock(x,y,d,playerIndex,particles); break;
+    default:          p = new Knight(x,y,d,playerIndex,particles); break;
   }
+  p.className = className;
+  return p;
 }

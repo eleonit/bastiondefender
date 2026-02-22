@@ -223,64 +223,107 @@ export function drawHUD(ctx, W, H, players, waveManager, base, player, uiState) 
 }
 
 /** 
- * PANEL DE ESTADÍSTICAS
+ * PANEL DE ESTADÍSTICAS — Rediseñado para mostrar todos los datos
  */
 export function drawStatsPanel(ctx, W, H, player, uiState) {
   const isMobile = W < 768;
-  const panW = isMobile ? Math.min(W * 0.9, 360) : 320;
-  const panH = isMobile ? Math.min(H * 0.8, 400) : 340;
+  const panW = isMobile ? Math.min(W * 0.9, 450) : 400;
+  const panH = isMobile ? Math.min(H * 0.9, 500) : 460;
   const panX = W/2 - panW/2, panY = H/2 - panH/2;
 
   ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.92)';
-  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
-  _roundRect(ctx, panX, panY, panW, panH, 15);
+  ctx.fillStyle = 'rgba(0,0,0,0.95)';
+  ctx.strokeStyle = player.color || '#ffd700'; ctx.lineWidth = 4;
+  _roundRect(ctx, panX, panY, panW, panH, 20);
   ctx.fill(); ctx.stroke();
 
-  // Titulo
-  ctx.font = 'bold 16px "Press Start 2P"';
-  ctx.fillStyle = '#ffd700'; ctx.textAlign = 'center';
-  ctx.fillText('ESTADÍSTICAS', W/2, panY + 40);
+  // Titulo y Clase
+  const className = player.className || "Héroe";
+  const icon = player.classData.icon || "👤";
+  ctx.font = 'bold 20px "Press Start 2P"';
+  ctx.fillStyle = player.color || '#ffd700'; ctx.textAlign = 'center';
+  ctx.fillText(`${icon} ${className.toUpperCase()}`, W/2, panY + 45);
 
-  // Stats
-  ctx.font = '14px "Press Start 2P"';
-  ctx.textAlign = 'left';
+  ctx.font = '12px "Press Start 2P"';
   ctx.fillStyle = '#fff';
-  const startX = panX + 30;
-  ctx.fillText(`Nivel: ${player.level}`, startX, panY + 80);
-  ctx.fillText(`Puntos: ${player.statPoints}`, startX, panY + 110);
+  ctx.fillText(`Nivel ${player.level}`, W/2, panY + 75);
 
-  const stats = [
-    { label: '⚔️ ATK', val: player.atk, type: 'atk' },
-    { label: '❤️ HP ', val: player.maxHp, type: 'hp' },
-    { label: '🏃 SPD', val: player.speed.toFixed(1), type: 'speed' }
+  const startX = panX + 35;
+  const barW = panW - 70;
+
+  // Barra HP
+  const hpPerc = Math.min(1, player.hp / player.maxHp);
+  ctx.fillStyle = '#333';
+  _roundRect(ctx, startX, panY + 100, barW, 20, 5); ctx.fill();
+  ctx.fillStyle = '#ff4444';
+  _roundRect(ctx, startX, panY + 100, barW * hpPerc, 20, 5); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 10px monospace';
+  ctx.fillText(`HP: ${player.hp} / ${player.maxHp}`, W/2, panY + 114);
+
+  // Barra XP
+  const xpPerc = Math.min(1, player.xp / player.nextLevelXp);
+  ctx.fillStyle = '#333';
+  _roundRect(ctx, startX, panY + 130, barW, 20, 5); ctx.fill();
+  ctx.fillStyle = '#44ccff';
+  _roundRect(ctx, startX, panY + 130, barW * xpPerc, 20, 5); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.fillText(`XP: ${player.xp} / ${player.nextLevelXp}`, W/2, panY + 144);
+
+  // Puntos Disponibles
+  ctx.font = '12px "Press Start 2P"';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = player.statPoints > 0 ? '#ffcc00' : '#888';
+  ctx.fillText(`PUNTOS: ${player.statPoints}`, startX, panY + 185);
+
+  const statsList = [
+    { label: '⚔️ ATAQUE', val: player.atk, type: 'atk' },
+    { label: '❤️ SALUD', val: player.maxHp, type: 'hp' },
+    { label: '🏃 VELOC.', val: player.speed.toFixed(1), type: 'speed' }
   ];
 
   uiState.statButtons = [];
-  stats.forEach((s, i) => {
-    const y = panY + 160 + i * 50;
+  statsList.forEach((s, i) => {
+    const y = panY + 225 + i * 45;
+    ctx.font = '12px "Press Start 2P"';
+    ctx.fillStyle = '#fff';
     ctx.fillText(`${s.label}: ${s.val}`, startX, y);
     
     if (player.statPoints > 0) {
-      const bx = panX + panW - 60, bw = 30, bh = 30;
+      const bx = panX + panW - 70, bw = 35, bh = 35;
       ctx.fillStyle = '#ffd700';
-      _roundRect(ctx, bx, y - 20, bw, bh, 5);
+      _roundRect(ctx, bx, y - 22, bw, bh, 8);
       ctx.fill();
-      ctx.fillStyle = '#000';
-      ctx.font = 'bold 20px monospace';
-      ctx.fillText('+', bx + 9, y + 4);
-      uiState.statButtons.push({ x: bx, y: y - 20, w: bw, h: bh, type: s.type });
+      ctx.fillStyle = '#000'; ctx.textAlign = 'center';
+      ctx.font = 'bold 22px monospace';
+      ctx.fillText('+', bx + bw/2, y + 6);
+      ctx.textAlign = 'left'; // Reset
+      uiState.statButtons.push({ x: bx, y: y - 22, w: bw, h: bh, type: s.type });
     }
   });
 
+  // Habilidades Unlock info
+  const abY = panY + 360;
+  ctx.font = 'bold 10px "Press Start 2P"';
+  ctx.fillStyle = '#aaa';
+  ctx.fillText('HABILIDADES:', startX, abY);
+  
+  player.classData.abilities.forEach((ab, i) => {
+    const unlockLvl = CONFIG.ABILITY_UNLOCK_LEVELS[i] || 1;
+    const isLocked = player.level < unlockLvl;
+    const y = abY + 25 + i * 18;
+    ctx.font = '9px "Press Start 2P"';
+    ctx.fillStyle = isLocked ? '#555' : '#44ff44';
+    ctx.fillText(`${ab.icon} ${ab.name.padEnd(20)} ${isLocked ? '(Nvl '+unlockLvl+')' : '✅'}`, startX, y);
+  });
+
   // Boton Cerrar
-  const cbW = 120, cbH = 35, cbX = W/2 - cbW/2, cbY = panY + panH - 50;
+  const cbW = 160, cbH = 40, cbX = W/2 - cbW/2, cbY = panY + panH - 60;
   ctx.fillStyle = '#444';
-  _roundRect(ctx, cbX, cbY, cbW, cbH, 8);
-  ctx.fill(); ctx.stroke();
-  ctx.font = 'bold 11px "Press Start 2P"';
+  _roundRect(ctx, cbX, cbY, cbW, cbH, 10);
+  ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.font = 'bold 12px "Press Start 2P"';
   ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-  ctx.fillText('CERRAR', W/2, cbY + cbH/2 + 2);
+  ctx.fillText('CERRAR', W/2, cbY + cbH/2 + 4);
   uiState.closeStatsBtn = { x: cbX, y: cbY, w: cbW, h: cbH };
 
   ctx.restore();
